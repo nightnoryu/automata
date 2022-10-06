@@ -214,12 +214,37 @@ func serializeMealy(automaton app.MealyAutomaton) [][]string {
 	return result
 }
 
-func serializeMealyMove(stateAndSignal app.DestinationStateAndSignal) string {
-	return stateAndSignal.State + stateAndSignalSeparator + stateAndSignal.Signal
+func serializeMoore(automaton app.MooreAutomaton) [][]string {
+	result := make([][]string, len(automaton.InputSymbols)+2)
+	for i := range result {
+		result[i] = make([]string, 0, len(automaton.States)+1)
+	}
+
+	result[0] = append(result[0], "")
+	result[1] = append(result[1], "")
+	for _, state := range automaton.States {
+		result[0] = append(result[0], automaton.StateSignals[state])
+		result[1] = append(result[1], state)
+	}
+
+	for i, inputSymbol := range automaton.InputSymbols {
+		result[i+2] = append(result[i+2], inputSymbol)
+
+		for _, state := range automaton.States {
+			key := app.InitialStateAndInputSymbol{
+				State:  state,
+				Symbol: inputSymbol,
+			}
+
+			result[i+2] = append(result[i+2], automaton.Moves[key])
+		}
+	}
+
+	return result
 }
 
-func serializeMoore(automaton app.MooreAutomaton) [][]string {
-	return nil
+func serializeMealyMove(stateAndSignal app.DestinationStateAndSignal) string {
+	return stateAndSignal.State + stateAndSignalSeparator + stateAndSignal.Signal
 }
 
 func transpose(matrix [][]string) [][]string {
