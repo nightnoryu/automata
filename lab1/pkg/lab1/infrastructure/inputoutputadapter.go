@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"strings"
 
@@ -44,11 +45,13 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 }
 
 func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
-	panic("unimplemented")
+	fmt.Println(automaton)
+	return nil
 }
 
 func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
-	panic("unimplemented")
+	fmt.Println(automaton)
+	return nil
 }
 
 func getStates(records [][]string) []string {
