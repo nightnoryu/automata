@@ -1,6 +1,9 @@
 package app
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 const mooreStatesLetter = "q"
 
@@ -40,6 +43,8 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 		return err
 	}
 
+	fmt.Println(automaton)
+
 	newAutomaton := MealyAutomaton{
 		States:       automaton.States,
 		InputSymbols: automaton.InputSymbols,
@@ -50,7 +55,9 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 	return s.inputOutputAdapter.WriteMealy(outputFilename, newAutomaton)
 }
 
-func buildNewMooreStates(moves map[InitialStateAndInputSymbol]DestinationStateAndSignal) map[string]DestinationStateAndSignal {
+func buildNewMooreStates(
+	moves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
+) map[string]DestinationStateAndSignal {
 	result := make(map[string]DestinationStateAndSignal)
 	processedStates := make(map[DestinationStateAndSignal]bool)
 	counter := 1

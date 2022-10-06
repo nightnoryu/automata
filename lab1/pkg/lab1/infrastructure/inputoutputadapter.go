@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
 	"strings"
 
@@ -32,8 +31,8 @@ func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, erro
 		return app.MealyAutomaton{}, err
 	}
 
-	states := getStates(records)
-	inputSymbols := getInputSymbols(records)
+	states := getMealyStates(records)
+	inputSymbols := getMealyInputSymbols(records)
 
 	return app.MealyAutomaton{
 		States:       states,
@@ -43,27 +42,47 @@ func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, erro
 }
 
 func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, error) {
-	panic("unimplemented")
-	// TODO
+	file, err := os.Open(filename)
+	if err != nil {
+		return app.MooreAutomaton{}, err
+	}
+	defer file.Close()
+
+	csvReader := csv.NewReader(file)
+	csvReader.Comma = ';'
+
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return app.MooreAutomaton{}, err
+	}
+
+	states := getMooreStates(records)
+	inputSymbols := getMooreInputSymbols(records)
+	stateSignals := getMooreStateSignals(records)
+
+	return app.MooreAutomaton{
+		States:       states,
+		InputSymbols: inputSymbols,
+		StateSignals: stateSignals,
+		Moves:        getMooreMoves(records, states, inputSymbols),
+	}, nil
 }
 
 func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
-	fmt.Println(automaton)
 	// TODO
 	return nil
 }
 
 func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
-	fmt.Println(automaton)
 	// TODO
 	return nil
 }
 
-func getStates(records [][]string) []string {
+func getMealyStates(records [][]string) []string {
 	return records[0][1:]
 }
 
-func getInputSymbols(records [][]string) []string {
+func getMealyInputSymbols(records [][]string) []string {
 	result := make([]string, 0, len(records)-1)
 	for _, row := range records[1:] {
 		result = append(result, row[0])
@@ -72,7 +91,10 @@ func getInputSymbols(records [][]string) []string {
 	return result
 }
 
-func getMealyMoves(records [][]string, states, inputSymbols []string) map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal {
+func getMealyMoves(
+	records [][]string,
+	states, inputSymbols []string,
+) map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal {
 	result := make(map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal)
 
 	transposedRecords := transpose(records[1:])
@@ -93,6 +115,36 @@ func getMealyMoves(records [][]string, states, inputSymbols []string) map[app.In
 	}
 
 	return result
+}
+
+func getMooreStates(records [][]string) []string {
+	return records[1][1:]
+}
+
+func getMooreInputSymbols(records [][]string) []string {
+	result := make([]string, 0, len(records)-2)
+	for _, row := range records[2:] {
+		result = append(result, row[0])
+	}
+
+	return result
+}
+
+func getMooreStateSignals(records [][]string) map[string]string {
+	states := getMooreStates(records)
+	signals := records[0][1:]
+
+	result := make(map[string]string)
+	for i, state := range states {
+		result[state] = signals[i]
+	}
+
+	return result
+}
+
+func getMooreMoves(records [][]string, states []string, symbols []string) map[app.InitialStateAndInputSymbol]string {
+	// TODO
+	return nil
 }
 
 func transpose(matrix [][]string) [][]string {
