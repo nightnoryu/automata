@@ -34,39 +34,6 @@ func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) e
 	return s.inputOutputAdapter.WriteMoore(outputFilename, newAutomaton)
 }
 
-func getMooreMoves(
-	newStates []string,
-	newStateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
-	inputSymbols []string,
-	oldMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
-) map[InitialStateAndInputSymbol]string {
-	oldStateToNewStateMap := make(map[string]string)
-	for newState, oldStateAndSignal := range newStateToOldStateAndSignalMap {
-		oldStateToNewStateMap[oldStateAndSignal.State] = newState
-	}
-
-	result := make(map[InitialStateAndInputSymbol]string)
-	for _, newState := range newStates {
-		oldState := newStateToOldStateAndSignalMap[newState].State
-		for _, symbol := range inputSymbols {
-			key := InitialStateAndInputSymbol{
-				State:  oldState,
-				Symbol: symbol,
-			}
-
-			oldDestination := oldMoves[key]
-
-			newKey := InitialStateAndInputSymbol{
-				State:  newState,
-				Symbol: symbol,
-			}
-			result[newKey] = oldStateToNewStateMap[oldDestination.State]
-		}
-	}
-
-	return result
-}
-
 func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) error {
 	automaton, err := s.inputOutputAdapter.GetMoore(inputFilename)
 	if err != nil {
@@ -77,6 +44,8 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 		States:       automaton.States,
 		InputSymbols: automaton.InputSymbols,
 	}
+
+	// TODO
 
 	return s.inputOutputAdapter.WriteMealy(outputFilename, newAutomaton)
 }
@@ -115,6 +84,39 @@ func getMooreStateSignals(newStateToOldStateAndSignalMap map[string]DestinationS
 	result := make(map[string]string)
 	for newState, oldStateAndSignal := range newStateToOldStateAndSignalMap {
 		result[newState] = oldStateAndSignal.Signal
+	}
+
+	return result
+}
+
+func getMooreMoves(
+	newStates []string,
+	newStateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
+	inputSymbols []string,
+	oldMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
+) map[InitialStateAndInputSymbol]string {
+	oldStateToNewStateMap := make(map[string]string)
+	for newState, oldStateAndSignal := range newStateToOldStateAndSignalMap {
+		oldStateToNewStateMap[oldStateAndSignal.State] = newState
+	}
+
+	result := make(map[InitialStateAndInputSymbol]string)
+	for _, newState := range newStates {
+		oldState := newStateToOldStateAndSignalMap[newState].State
+		for _, symbol := range inputSymbols {
+			key := InitialStateAndInputSymbol{
+				State:  oldState,
+				Symbol: symbol,
+			}
+
+			oldDestination := oldMoves[key]
+
+			newKey := InitialStateAndInputSymbol{
+				State:  newState,
+				Symbol: symbol,
+			}
+			result[newKey] = oldStateToNewStateMap[oldDestination.State]
+		}
 	}
 
 	return result

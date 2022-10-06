@@ -44,15 +44,18 @@ func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, erro
 
 func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, error) {
 	panic("unimplemented")
+	// TODO
 }
 
 func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
 	fmt.Println(automaton)
+	// TODO
 	return nil
 }
 
 func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
 	fmt.Println(automaton)
+	// TODO
 	return nil
 }
 
