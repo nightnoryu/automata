@@ -1,11 +1,10 @@
 package app
 
 import (
-	"fmt"
 	"strconv"
 )
 
-const mooreStatesLetter = "q"
+const newStatesIdentifier = "q"
 
 func NewTranslatorService(inputOutputAdapter InputOutputAdapter) *TranslatorService {
 	return &TranslatorService{
@@ -18,55 +17,53 @@ type TranslatorService struct {
 }
 
 func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) error {
-	automaton, err := s.inputOutputAdapter.GetMealy(inputFilename)
+	mealyAutomaton, err := s.inputOutputAdapter.GetMealy(inputFilename)
 	if err != nil {
 		return err
 	}
 
-	newStateToOldStateAndSignalMap := buildNewMooreStates(automaton.Moves)
+	newStateToOldStateAndSignalMap := buildNewMooreStates(mealyAutomaton.Moves)
+	states := getMooreStates(newStateToOldStateAndSignalMap)
 
-	newStates := getMooreStates(newStateToOldStateAndSignalMap)
-
-	newAutomaton := MooreAutomaton{
-		States:       newStates,
-		InputSymbols: automaton.InputSymbols,
+	mooreAutomaton := MooreAutomaton{
+		States:       states,
+		InputSymbols: mealyAutomaton.InputSymbols,
 		StateSignals: getMooreStateSignals(newStateToOldStateAndSignalMap),
-		Moves:        getMooreMoves(newStates, newStateToOldStateAndSignalMap, automaton.InputSymbols, automaton.Moves),
+		Moves:        getMooreMoves(states, newStateToOldStateAndSignalMap, mealyAutomaton.InputSymbols, mealyAutomaton.Moves),
 	}
 
-	return s.inputOutputAdapter.WriteMoore(outputFilename, newAutomaton)
+	return s.inputOutputAdapter.WriteMoore(outputFilename, mooreAutomaton)
 }
 
 func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) error {
-	automaton, err := s.inputOutputAdapter.GetMoore(inputFilename)
+	mooreAutomaton, err := s.inputOutputAdapter.GetMoore(inputFilename)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(automaton)
-
-	newAutomaton := MealyAutomaton{
-		States:       automaton.States,
-		InputSymbols: automaton.InputSymbols,
+	mealyAutomaton := MealyAutomaton{
+		States:       mooreAutomaton.States,
+		InputSymbols: mooreAutomaton.InputSymbols,
 	}
 
-	// TODO
-
-	return s.inputOutputAdapter.WriteMealy(outputFilename, newAutomaton)
+	return s.inputOutputAdapter.WriteMealy(outputFilename, mealyAutomaton)
 }
 
 func buildNewMooreStates(
 	moves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
 ) map[string]DestinationStateAndSignal {
-	result := make(map[string]DestinationStateAndSignal)
 	processedStates := make(map[DestinationStateAndSignal]bool)
+
+	result := make(map[string]DestinationStateAndSignal)
 	counter := 1
 	for _, destinationStateAndSignal := range moves {
 		if processedStates[destinationStateAndSignal] {
 			continue
 		}
-		stateName := getMooreStateName(counter)
+
+		stateName := getNewStateName(counter)
 		result[stateName] = destinationStateAndSignal
+
 		counter++
 		processedStates[destinationStateAndSignal] = true
 	}
@@ -74,8 +71,8 @@ func buildNewMooreStates(
 	return result
 }
 
-func getMooreStateName(number int) string {
-	return mooreStatesLetter + strconv.Itoa(number)
+func getNewStateName(number int) string {
+	return newStatesIdentifier + strconv.Itoa(number)
 }
 
 func getMooreStates(newStateToOldStateAndSignalMap map[string]DestinationStateAndSignal) []string {
@@ -97,33 +94,36 @@ func getMooreStateSignals(newStateToOldStateAndSignalMap map[string]DestinationS
 }
 
 func getMooreMoves(
-	newStates []string,
-	newStateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
+	states []string,
+	stateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
 	inputSymbols []string,
-	oldMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
+	moves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
 ) map[InitialStateAndInputSymbol]string {
-	oldStateToNewStateMap := make(map[string]string)
-	for newState, oldStateAndSignal := range newStateToOldStateAndSignalMap {
-		oldStateToNewStateMap[oldStateAndSignal.State] = newState
-	}
+	oldStateToStateMap := getOldStateToStateMap(stateToOldStateAndSignalMap)
 
 	result := make(map[InitialStateAndInputSymbol]string)
-	for _, newState := range newStates {
-		oldState := newStateToOldStateAndSignalMap[newState].State
+	for _, state := range states {
+		oldState := stateToOldStateAndSignalMap[state].State
 		for _, symbol := range inputSymbols {
-			key := InitialStateAndInputSymbol{
+			oldDestination := moves[InitialStateAndInputSymbol{
 				State:  oldState,
 				Symbol: symbol,
-			}
+			}]
 
-			oldDestination := oldMoves[key]
-
-			newKey := InitialStateAndInputSymbol{
-				State:  newState,
+			result[InitialStateAndInputSymbol{
+				State:  state,
 				Symbol: symbol,
-			}
-			result[newKey] = oldStateToNewStateMap[oldDestination.State]
+			}] = oldStateToStateMap[oldDestination.State]
 		}
+	}
+
+	return result
+}
+
+func getOldStateToStateMap(stateToOldStateAndSignalMap map[string]DestinationStateAndSignal) map[string]string {
+	result := make(map[string]string)
+	for state, oldStateAndSignal := range stateToOldStateAndSignalMap {
+		result[oldStateAndSignal.State] = state
 	}
 
 	return result
