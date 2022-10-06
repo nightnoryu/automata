@@ -44,6 +44,7 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 	mealyAutomaton := MealyAutomaton{
 		States:       mooreAutomaton.States,
 		InputSymbols: mooreAutomaton.InputSymbols,
+		Moves:        getMealyMoves(mooreAutomaton.Moves, mooreAutomaton.StateSignals),
 	}
 
 	return s.inputOutputAdapter.WriteMealy(outputFilename, mealyAutomaton)
@@ -124,6 +125,21 @@ func getOldStateToStateMap(stateToOldStateAndSignalMap map[string]DestinationSta
 	result := make(map[string]string)
 	for state, oldStateAndSignal := range stateToOldStateAndSignalMap {
 		result[oldStateAndSignal.State] = state
+	}
+
+	return result
+}
+
+func getMealyMoves(
+	moves map[InitialStateAndInputSymbol]string,
+	stateToSignalMap map[string]string,
+) map[InitialStateAndInputSymbol]DestinationStateAndSignal {
+	result := make(map[InitialStateAndInputSymbol]DestinationStateAndSignal)
+	for initialStateAndInputSymbol, destinationState := range moves {
+		result[initialStateAndInputSymbol] = DestinationStateAndSignal{
+			State:  destinationState,
+			Signal: stateToSignalMap[destinationState],
+		}
 	}
 
 	return result

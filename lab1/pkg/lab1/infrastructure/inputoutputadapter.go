@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"strings"
 
@@ -21,6 +22,7 @@ func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, erro
 	if err != nil {
 		return app.MealyAutomaton{}, err
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
 
 	csvReader := csv.NewReader(file)
@@ -46,6 +48,7 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 	if err != nil {
 		return app.MooreAutomaton{}, err
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
 
 	csvReader := csv.NewReader(file)
@@ -70,11 +73,13 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 
 func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
 	// TODO
+	fmt.Println(automaton)
 	return nil
 }
 
 func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
 	// TODO
+	fmt.Println(automaton)
 	return nil
 }
 
