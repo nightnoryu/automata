@@ -2,14 +2,16 @@ package infrastructure
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
 	"strings"
 
 	"automata/lab1/pkg/lab1/app"
 )
 
-const stateAndSignalSeparator = "/"
+const (
+	stateAndSignalSeparator = "/"
+	csvValuesSeparator      = ';'
+)
 
 func NewInputOutputAdapter() app.InputOutputAdapter {
 	return &inputOutputAdapter{}
@@ -26,7 +28,7 @@ func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, erro
 	defer file.Close()
 
 	csvReader := csv.NewReader(file)
-	csvReader.Comma = ';'
+	csvReader.Comma = csvValuesSeparator
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
@@ -52,7 +54,7 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 	defer file.Close()
 
 	csvReader := csv.NewReader(file)
-	csvReader.Comma = ';'
+	csvReader.Comma = csvValuesSeparator
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
@@ -72,15 +74,31 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 }
 
 func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
-	// TODO
-	fmt.Println(automaton)
-	return nil
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer file.Close()
+
+	csvWriter := csv.NewWriter(file)
+	csvWriter.Comma = csvValuesSeparator
+
+	return csvWriter.WriteAll(serializeMealy(automaton))
 }
 
 func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
-	// TODO
-	fmt.Println(automaton)
-	return nil
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer file.Close()
+
+	csvWriter := csv.NewWriter(file)
+	csvWriter.Comma = csvValuesSeparator
+
+	return csvWriter.WriteAll(serializeMoore(automaton))
 }
 
 func getMealyStates(records [][]string) []string {
@@ -167,6 +185,41 @@ func getMooreMoves(
 	}
 
 	return result
+}
+
+func serializeMealy(automaton app.MealyAutomaton) [][]string {
+	result := make([][]string, len(automaton.InputSymbols)+1)
+	for i := range result {
+		result[i] = make([]string, 0, len(automaton.States)+1)
+	}
+
+	result[0] = append(result[0], "")
+	for _, state := range automaton.States {
+		result[0] = append(result[0], state)
+	}
+
+	for i, inputSymbol := range automaton.InputSymbols {
+		result[i+1] = append(result[i+1], inputSymbol)
+
+		for _, state := range automaton.States {
+			key := app.InitialStateAndInputSymbol{
+				State:  state,
+				Symbol: inputSymbol,
+			}
+
+			result[i+1] = append(result[i+1], serializeMealyMove(automaton.Moves[key]))
+		}
+	}
+
+	return result
+}
+
+func serializeMealyMove(stateAndSignal app.DestinationStateAndSignal) string {
+	return stateAndSignal.State + stateAndSignalSeparator + stateAndSignal.Signal
+}
+
+func serializeMoore(automaton app.MooreAutomaton) [][]string {
+	return nil
 }
 
 func transpose(matrix [][]string) [][]string {
