@@ -95,9 +95,9 @@ func getMealyMoves(
 	records [][]string,
 	states, inputSymbols []string,
 ) map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal {
-	result := make(map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal)
-
 	transposedRecords := transpose(records[1:])
+
+	result := make(map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal)
 	for i, stateAndMoves := range transposedRecords[1:] {
 		for j, move := range stateAndMoves {
 			stateAndInput := app.InitialStateAndInputSymbol{
@@ -142,9 +142,26 @@ func getMooreStateSignals(records [][]string) map[string]string {
 	return result
 }
 
-func getMooreMoves(records [][]string, states []string, symbols []string) map[app.InitialStateAndInputSymbol]string {
-	// TODO
-	return nil
+func getMooreMoves(
+	records [][]string,
+	states []string,
+	inputSymbols []string,
+) map[app.InitialStateAndInputSymbol]string {
+	transposedRecords := transpose(records[2:])
+
+	result := make(map[app.InitialStateAndInputSymbol]string)
+	for i, stateAndMoves := range transposedRecords[1:] {
+		for j, move := range stateAndMoves {
+			stateAndInput := app.InitialStateAndInputSymbol{
+				State:  states[i],
+				Symbol: inputSymbols[j],
+			}
+
+			result[stateAndInput] = move
+		}
+	}
+
+	return result
 }
 
 func transpose(matrix [][]string) [][]string {
