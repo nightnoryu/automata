@@ -9,6 +9,8 @@ import (
 	"automata/lab1/pkg/lab1/app"
 )
 
+const stateAndSignalSeparator = "/"
+
 func NewInputOutputAdapter() app.InputOutputAdapter {
 	return &inputOutputAdapter{}
 }
@@ -78,7 +80,7 @@ func getMealyMoves(records [][]string, states, inputSymbols []string) map[app.In
 				Symbol: inputSymbols[j],
 			}
 
-			split := strings.Split(move, "/")
+			split := strings.Split(move, stateAndSignalSeparator)
 
 			result[stateAndInput] = app.DestinationStateAndSignal{
 				State:  split[0],
