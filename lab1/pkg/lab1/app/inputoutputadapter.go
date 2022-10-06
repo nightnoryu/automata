@@ -11,7 +11,12 @@ type InputOutputAdapter interface {
 type MealyAutomaton struct {
 	States       []string
 	InputSymbols []string
-	Moves        map[string]map[string]DestinationStateAndSignal // State -> Input symbol -> New state and signal
+	Moves        map[InitialStateAndInputSymbol]DestinationStateAndSignal
+}
+
+type InitialStateAndInputSymbol struct {
+	State  string
+	Symbol string
 }
 
 type DestinationStateAndSignal struct {
@@ -22,6 +27,6 @@ type DestinationStateAndSignal struct {
 type MooreAutomaton struct {
 	States       []string
 	InputSymbols []string
-	StateSignals map[string]string            // State -> signal
-	Moves        map[string]map[string]string // State -> Input symbol -> New state
+	StateSignals map[string]string
+	Moves        map[InitialStateAndInputSymbol]string
 }
