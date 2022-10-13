@@ -149,12 +149,45 @@ func buildNextEquivalencyGroups(
 }
 
 func buildMinimizedMealy(mealyAutomaton MealyAutomaton, groupToStatesMap map[int][]string) MealyAutomaton {
-	// TODO
+	oldStateToNewStateMap := make(map[string]string)
+	newStates := make([]string, 0, len(groupToStatesMap))
+
+	for group, oldStates := range groupToStatesMap {
+		newState := getNewStateName(group)
+		for _, oldState := range oldStates {
+			oldStateToNewStateMap[oldState] = newState
+		}
+
+		newStates = append(newStates, newState)
+	}
+
+	newMoves := make(MealyMoves)
+
+	for _, states := range groupToStatesMap {
+		baseState := states[0]
+
+		for _, inputSymbol := range mealyAutomaton.InputSymbols {
+			key := InitialStateAndInputSymbol{
+				State:  baseState,
+				Symbol: inputSymbol,
+			}
+			oldDestinationStateAndSignal := mealyAutomaton.Moves[key]
+
+			newKey := InitialStateAndInputSymbol{
+				State:  oldStateToNewStateMap[baseState],
+				Symbol: inputSymbol,
+			}
+			newMoves[newKey] = DestinationStateAndSignal{
+				State:  oldStateToNewStateMap[oldDestinationStateAndSignal.State],
+				Signal: oldDestinationStateAndSignal.Signal,
+			}
+		}
+	}
 
 	return MealyAutomaton{
-		States:       nil,
+		States:       newStates,
 		InputSymbols: mealyAutomaton.InputSymbols,
-		Moves:        nil,
+		Moves:        newMoves,
 	}
 }
 
@@ -169,10 +202,14 @@ func buildMinimizedMoore(mooreAutomaton MooreAutomaton, groupToStatesMap map[int
 	}
 }
 
+func getNewStateName(number int) string {
+	return newStatesIdentifier + strconv.Itoa(number)
+}
+
 func simplifyMealyMoves(
 	mealyMoves MealyMoves,
-) map[InitialStateAndInputSymbol]string {
-	result := make(map[InitialStateAndInputSymbol]string)
+) MooreMoves {
+	result := make(MooreMoves)
 	for initialStateAndInputSymbol, destinationStateAndSignal := range mealyMoves {
 		result[initialStateAndInputSymbol] = destinationStateAndSignal.State
 	}
