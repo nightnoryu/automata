@@ -1,7 +1,9 @@
 package app
 
 import (
+	"log"
 	"strconv"
+	"strings"
 )
 
 const newStatesIdentifier = "q"
@@ -61,8 +63,6 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 			break
 		}
 	}
-
-	// TODO: build new automaton
 
 	minimizedAutomaton := buildMinimizedMoore(mooreAutomaton, groupToStatesMap)
 	return s.inputOutputAdapter.WriteMoore(outputFilename, minimizedAutomaton)
@@ -192,13 +192,55 @@ func buildMinimizedMealy(mealyAutomaton MealyAutomaton, groupToStatesMap map[int
 }
 
 func buildMinimizedMoore(mooreAutomaton MooreAutomaton, groupToStatesMap map[int][]string) MooreAutomaton {
-	// TODO
+	oldStateToNewStateMap := make(map[string]string)
+	newStates := make([]string, 0, len(groupToStatesMap))
+	newStateSignals := make(map[string]string)
+
+	for group, oldStates := range groupToStatesMap {
+		baseState := oldStates[0]
+		newState := getNewStateName(group)
+
+		for _, oldState := range oldStates {
+			oldStateToNewStateMap[oldState] = newState
+		}
+
+		newStates = append(newStates, newState)
+		newStateSignals[newState] = mooreAutomaton.StateSignals[baseState]
+
+		log.Printf(
+			"group %d = { %s }; %s = %s",
+			group,
+			strings.Join(oldStates, ", "),
+			newState,
+			baseState,
+		)
+	}
+
+	newMoves := make(MooreMoves)
+
+	for _, states := range groupToStatesMap {
+		baseState := states[0]
+
+		for _, inputSymbol := range mooreAutomaton.InputSymbols {
+			key := InitialStateAndInputSymbol{
+				State:  baseState,
+				Symbol: inputSymbol,
+			}
+			oldDestinationState := mooreAutomaton.Moves[key]
+
+			newKey := InitialStateAndInputSymbol{
+				State:  oldStateToNewStateMap[baseState],
+				Symbol: inputSymbol,
+			}
+			newMoves[newKey] = oldStateToNewStateMap[oldDestinationState]
+		}
+	}
 
 	return MooreAutomaton{
-		States:       nil,
-		InputSymbols: mooreAutomaton.States,
-		StateSignals: nil,
-		Moves:        nil,
+		States:       newStates,
+		InputSymbols: mooreAutomaton.InputSymbols,
+		StateSignals: newStateSignals,
+		Moves:        newMoves,
 	}
 }
 
