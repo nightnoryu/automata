@@ -4,6 +4,8 @@ import (
 	"strconv"
 )
 
+const newStatesIdentifier = "q"
+
 func NewMinimizerService(inputOutputAdapter InputOutputAdapter) *MinimizerService {
 	return &MinimizerService{
 		inputOutputAdapter: inputOutputAdapter,
@@ -35,9 +37,8 @@ func (s *MinimizerService) MinimizeMealy(inputFilename, outputFilename string) e
 		}
 	}
 
-	// TODO: build new automaton
-
-	return s.inputOutputAdapter.WriteMealy(outputFilename, mealyAutomaton)
+	minimizedAutomaton := buildMinimizedMealy(mealyAutomaton, groupToStatesMap)
+	return s.inputOutputAdapter.WriteMealy(outputFilename, minimizedAutomaton)
 }
 
 func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) error {
@@ -63,7 +64,8 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 
 	// TODO: build new automaton
 
-	return s.inputOutputAdapter.WriteMoore(outputFilename, mooreAutomaton)
+	minimizedAutomaton := buildMinimizedMoore(mooreAutomaton, groupToStatesMap)
+	return s.inputOutputAdapter.WriteMoore(outputFilename, minimizedAutomaton)
 }
 
 func buildOneEquivalencyGroups(mealyAutomaton MealyAutomaton) (stateToGroupMap map[int][]string, groupAmount int) {
@@ -144,6 +146,27 @@ func buildNextEquivalencyGroups(
 	}
 
 	return stateToNewGroupMap, groupAmount
+}
+
+func buildMinimizedMealy(mealyAutomaton MealyAutomaton, groupToStatesMap map[int][]string) MealyAutomaton {
+	// TODO
+
+	return MealyAutomaton{
+		States:       nil,
+		InputSymbols: mealyAutomaton.InputSymbols,
+		Moves:        nil,
+	}
+}
+
+func buildMinimizedMoore(mooreAutomaton MooreAutomaton, groupToStatesMap map[int][]string) MooreAutomaton {
+	// TODO
+
+	return MooreAutomaton{
+		States:       nil,
+		InputSymbols: mooreAutomaton.States,
+		StateSignals: nil,
+		Moves:        nil,
+	}
 }
 
 func simplifyMealyMoves(
