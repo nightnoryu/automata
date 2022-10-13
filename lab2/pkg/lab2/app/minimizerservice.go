@@ -68,7 +68,7 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 	return s.inputOutputAdapter.WriteMoore(outputFilename, minimizedAutomaton)
 }
 
-func buildOneEquivalencyGroups(mealyAutomaton MealyAutomaton) (stateToGroupMap map[int][]string, groupAmount int) {
+func buildOneEquivalencyGroups(mealyAutomaton MealyAutomaton) (groupToStatesMap map[int][]string, groupAmount int) {
 	stateToGroupHashMap := make(map[string]string)
 
 	for _, sourceState := range mealyAutomaton.States {
@@ -84,30 +84,30 @@ func buildOneEquivalencyGroups(mealyAutomaton MealyAutomaton) (stateToGroupMap m
 	}
 
 	groupHashToStatesMap := buildGroupHashToStatesMap(stateToGroupHashMap)
-	stateToGroupMap = make(map[int][]string)
+	groupToStatesMap = make(map[int][]string)
 
 	for _, newStates := range groupHashToStatesMap {
 		for _, state := range newStates {
-			stateToGroupMap[groupAmount] = append(stateToGroupMap[groupAmount], state)
+			groupToStatesMap[groupAmount] = append(groupToStatesMap[groupAmount], state)
 		}
 		groupAmount++
 	}
 
-	return stateToGroupMap, groupAmount
+	return groupToStatesMap, groupAmount
 }
 
-func buildZeroEquivalencyGroups(stateSignals map[string]string) (stateToGroupMap map[int][]string, groupAmount int) {
+func buildZeroEquivalencyGroups(stateSignals map[string]string) (groupToStatesMap map[int][]string, groupAmount int) {
 	signalToStatesMap := buildSignalToStatesMap(stateSignals)
-	stateToGroupMap = make(map[int][]string)
+	groupToStatesMap = make(map[int][]string)
 
 	for _, states := range signalToStatesMap {
 		for _, state := range states {
-			stateToGroupMap[groupAmount] = append(stateToGroupMap[groupAmount], state)
+			groupToStatesMap[groupAmount] = append(groupToStatesMap[groupAmount], state)
 		}
 		groupAmount++
 	}
 
-	return stateToGroupMap, groupAmount
+	return groupToStatesMap, groupAmount
 }
 
 func buildNextEquivalencyGroups(
@@ -153,12 +153,22 @@ func buildMinimizedMealy(mealyAutomaton MealyAutomaton, groupToStatesMap map[int
 	newStates := make([]string, 0, len(groupToStatesMap))
 
 	for group, oldStates := range groupToStatesMap {
+		baseState := oldStates[0]
 		newState := getNewStateName(group)
+
 		for _, oldState := range oldStates {
 			oldStateToNewStateMap[oldState] = newState
 		}
 
 		newStates = append(newStates, newState)
+
+		log.Printf(
+			"group %d = { %s }; %s = %s",
+			group,
+			strings.Join(oldStates, ", "),
+			newState,
+			baseState,
+		)
 	}
 
 	newMoves := make(MealyMoves)
