@@ -32,12 +32,12 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 		return err
 	}
 
-	stateToGroupMap, groupAmount := buildZeroEquivalencyGroups(mooreAutomaton.StateSignals)
+	groupToStatesMap, groupAmount := buildZeroEquivalencyGroups(mooreAutomaton.StateSignals)
 	for {
 		previousGroupAmount := groupAmount
 
-		stateToGroupMap, groupAmount = buildNextEquivalencyGroups(
-			stateToGroupMap,
+		groupToStatesMap, groupAmount = buildNextEquivalencyGroups(
+			groupToStatesMap,
 			mooreAutomaton.InputSymbols,
 			mooreAutomaton.Moves,
 		)
@@ -47,21 +47,18 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 		}
 	}
 
-	fmt.Println(stateToGroupMap, groupAmount)
+	fmt.Println(groupToStatesMap, groupAmount)
 
 	return s.inputOutputAdapter.WriteMoore(outputFilename, mooreAutomaton)
 }
 
-func buildZeroEquivalencyGroups(stateSignals map[string]string) (stateToGroupMap map[string]int, groupAmount int) {
-	signalToStatesMap := make(map[string][]string)
-	for state, signal := range stateSignals {
-		signalToStatesMap[signal] = append(signalToStatesMap[signal], state)
-	}
+func buildZeroEquivalencyGroups(stateSignals map[string]string) (stateToGroupMap map[int][]string, groupAmount int) {
+	signalToStatesMap := buildSignalToStatesMap(stateSignals)
 
-	stateToGroupMap = make(map[string]int)
+	stateToGroupMap = make(map[int][]string)
 	for _, states := range signalToStatesMap {
 		for _, state := range states {
-			stateToGroupMap[state] = groupAmount
+			stateToGroupMap[groupAmount] = append(stateToGroupMap[groupAmount], state)
 		}
 		groupAmount++
 	}
@@ -70,16 +67,13 @@ func buildZeroEquivalencyGroups(stateSignals map[string]string) (stateToGroupMap
 }
 
 func buildNextEquivalencyGroups(
-	stateToGroupMap map[string]int,
+	groupToStatesMap map[int][]string,
 	inputSymbols []string,
 	moves map[InitialStateAndInputSymbol]string,
-) (stateToNewGroupMap map[string]int, groupAmount int) {
-	groupToStatesMap := make(map[int][]string)
-	for state, group := range stateToGroupMap {
-		groupToStatesMap[group] = append(groupToStatesMap[group], state)
-	}
+) (stateToNewGroupMap map[int][]string, groupAmount int) {
+	stateToNewGroupMap = make(map[int][]string)
+	stateToGroupMap := buildStateToGroupMap(groupToStatesMap)
 
-	stateToNewGroupMap = make(map[string]int)
 	for _, groupStates := range groupToStatesMap {
 		stateToGroupHashMap := make(map[string]string)
 
@@ -97,18 +91,44 @@ func buildNextEquivalencyGroups(
 			}
 		}
 
-		groupHashToStatesMap := make(map[string][]string)
-		for state, groupHash := range stateToGroupHashMap {
-			groupHashToStatesMap[groupHash] = append(groupHashToStatesMap[groupHash], state)
-		}
+		groupHashToStatesMap := buildGroupHashToStatesMap(stateToGroupHashMap)
 
 		for _, newStates := range groupHashToStatesMap {
 			for _, state := range newStates {
-				stateToNewGroupMap[state] = groupAmount
+				stateToNewGroupMap[groupAmount] = append(stateToNewGroupMap[groupAmount], state)
 			}
 			groupAmount++
 		}
 	}
 
 	return stateToNewGroupMap, groupAmount
+}
+
+func buildSignalToStatesMap(stateSignals map[string]string) map[string][]string {
+	result := make(map[string][]string)
+	for state, signal := range stateSignals {
+		result[signal] = append(result[signal], state)
+	}
+
+	return result
+}
+
+func buildStateToGroupMap(groupToStatesMap map[int][]string) map[string]int {
+	result := make(map[string]int)
+	for group, states := range groupToStatesMap {
+		for _, state := range states {
+			result[state] = group
+		}
+	}
+
+	return result
+}
+
+func buildGroupHashToStatesMap(stateToGroupHashMap map[string]string) map[string][]string {
+	result := make(map[string][]string)
+	for state, groupHash := range stateToGroupHashMap {
+		result[groupHash] = append(result[groupHash], state)
+	}
+
+	return result
 }
