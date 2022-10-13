@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -21,7 +20,22 @@ func (s *MinimizerService) MinimizeMealy(inputFilename, outputFilename string) e
 		return err
 	}
 
-	// TODO
+	groupToStatesMap, groupAmount := buildOneEquivalencyGroups(mealyAutomaton)
+	for {
+		previousGroupAmount := groupAmount
+
+		groupToStatesMap, groupAmount = buildNextEquivalencyGroups(
+			groupToStatesMap,
+			mealyAutomaton.InputSymbols,
+			simplifyMealyMoves(mealyAutomaton.Moves),
+		)
+
+		if previousGroupAmount == groupAmount {
+			break
+		}
+	}
+
+	// TODO: build new automaton
 
 	return s.inputOutputAdapter.WriteMealy(outputFilename, mealyAutomaton)
 }
@@ -47,15 +61,43 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 		}
 	}
 
-	fmt.Println(groupToStatesMap, groupAmount)
+	// TODO: build new automaton
 
 	return s.inputOutputAdapter.WriteMoore(outputFilename, mooreAutomaton)
 }
 
+func buildOneEquivalencyGroups(mealyAutomaton MealyAutomaton) (stateToGroupMap map[int][]string, groupAmount int) {
+	stateToGroupHashMap := make(map[string]string)
+
+	for _, sourceState := range mealyAutomaton.States {
+		for _, inputSymbol := range mealyAutomaton.InputSymbols {
+			key := InitialStateAndInputSymbol{
+				State:  sourceState,
+				Symbol: inputSymbol,
+			}
+
+			destinationSignal := mealyAutomaton.Moves[key].Signal
+			stateToGroupHashMap[sourceState] += destinationSignal
+		}
+	}
+
+	groupHashToStatesMap := buildGroupHashToStatesMap(stateToGroupHashMap)
+	stateToGroupMap = make(map[int][]string)
+
+	for _, newStates := range groupHashToStatesMap {
+		for _, state := range newStates {
+			stateToGroupMap[groupAmount] = append(stateToGroupMap[groupAmount], state)
+		}
+		groupAmount++
+	}
+
+	return stateToGroupMap, groupAmount
+}
+
 func buildZeroEquivalencyGroups(stateSignals map[string]string) (stateToGroupMap map[int][]string, groupAmount int) {
 	signalToStatesMap := buildSignalToStatesMap(stateSignals)
-
 	stateToGroupMap = make(map[int][]string)
+
 	for _, states := range signalToStatesMap {
 		for _, state := range states {
 			stateToGroupMap[groupAmount] = append(stateToGroupMap[groupAmount], state)
@@ -102,6 +144,17 @@ func buildNextEquivalencyGroups(
 	}
 
 	return stateToNewGroupMap, groupAmount
+}
+
+func simplifyMealyMoves(
+	mealyMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
+) map[InitialStateAndInputSymbol]string {
+	result := make(map[InitialStateAndInputSymbol]string)
+	for initialStateAndInputSymbol, destinationStateAndSignal := range mealyMoves {
+		result[initialStateAndInputSymbol] = destinationStateAndSignal.State
+	}
+
+	return result
 }
 
 func buildSignalToStatesMap(stateSignals map[string]string) map[string][]string {
