@@ -113,7 +113,7 @@ func buildZeroEquivalencyGroups(stateSignals map[string]string) (stateToGroupMap
 func buildNextEquivalencyGroups(
 	groupToStatesMap map[int][]string,
 	inputSymbols []string,
-	moves map[InitialStateAndInputSymbol]string,
+	moves MooreMoves,
 ) (stateToNewGroupMap map[int][]string, groupAmount int) {
 	stateToNewGroupMap = make(map[int][]string)
 	stateToGroupMap := buildStateToGroupMap(groupToStatesMap)
@@ -170,7 +170,7 @@ func buildMinimizedMoore(mooreAutomaton MooreAutomaton, groupToStatesMap map[int
 }
 
 func simplifyMealyMoves(
-	mealyMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
+	mealyMoves MealyMoves,
 ) map[InitialStateAndInputSymbol]string {
 	result := make(map[InitialStateAndInputSymbol]string)
 	for initialStateAndInputSymbol, destinationStateAndSignal := range mealyMoves {
