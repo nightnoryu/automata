@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-const newStatesIdentifier = "q"
+const newStatesIdentifier = "S"
 
 func NewTranslatorService(inputOutputAdapter InputOutputAdapter) *TranslatorService {
 	return &TranslatorService{
@@ -58,7 +58,7 @@ func buildNewMooreStates(
 	processedStates := make(map[DestinationStateAndSignal]bool)
 
 	result := make(map[string]DestinationStateAndSignal)
-	counter := 1
+	counter := 0
 	for _, destinationStateAndSignal := range moves {
 		if processedStates[destinationStateAndSignal] {
 			continue
