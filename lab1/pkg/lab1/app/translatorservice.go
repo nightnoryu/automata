@@ -24,7 +24,7 @@ func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) e
 		return err
 	}
 
-	newStateToOldStateAndSignalMap := buildNewMooreStates(mealyAutomaton.Moves)
+	newStateToOldStateAndSignalMap := buildNewMooreStates(mealyAutomaton)
 	states := getMooreStates(newStateToOldStateAndSignalMap)
 
 	mooreAutomaton := MooreAutomaton{
@@ -52,25 +52,32 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 	return s.inputOutputAdapter.WriteMealy(outputFilename, mealyAutomaton)
 }
 
-func buildNewMooreStates(
-	moves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
-) map[string]DestinationStateAndSignal {
+func buildNewMooreStates(mealyAutomaton MealyAutomaton) map[string]DestinationStateAndSignal {
 	processedStates := make(map[DestinationStateAndSignal]bool)
 
 	result := make(map[string]DestinationStateAndSignal)
 	counter := 0
-	for _, destinationStateAndSignal := range moves {
-		if processedStates[destinationStateAndSignal] {
-			continue
+	for _, inputSymbol := range mealyAutomaton.InputSymbols {
+		for _, state := range mealyAutomaton.States {
+			key := InitialStateAndInputSymbol{
+				State:  state,
+				Symbol: inputSymbol,
+			}
+
+			destinationStateAndSignal := mealyAutomaton.Moves[key]
+
+			if processedStates[destinationStateAndSignal] {
+				continue
+			}
+
+			stateName := getNewStateName(counter)
+			result[stateName] = destinationStateAndSignal
+
+			counter++
+			processedStates[destinationStateAndSignal] = true
+
+			log.Printf("%s = %s/%s", stateName, destinationStateAndSignal.State, destinationStateAndSignal.Signal)
 		}
-
-		stateName := getNewStateName(counter)
-		result[stateName] = destinationStateAndSignal
-
-		counter++
-		processedStates[destinationStateAndSignal] = true
-
-		log.Printf("%s = %s/%s", stateName, destinationStateAndSignal.State, destinationStateAndSignal.Signal)
 	}
 
 	return result
