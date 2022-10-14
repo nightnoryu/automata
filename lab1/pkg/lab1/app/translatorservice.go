@@ -1,6 +1,8 @@
 package app
 
 import (
+	"log"
+	"sort"
 	"strconv"
 )
 
@@ -67,6 +69,8 @@ func buildNewMooreStates(
 
 		counter++
 		processedStates[destinationStateAndSignal] = true
+
+		log.Printf("%s = %s/%s", stateName, destinationStateAndSignal.State, destinationStateAndSignal.Signal)
 	}
 
 	return result
@@ -81,6 +85,8 @@ func getMooreStates(newStateToOldStateAndSignalMap map[string]DestinationStateAn
 	for state := range newStateToOldStateAndSignalMap {
 		result = append(result, state)
 	}
+
+	sort.Strings(result)
 
 	return result
 }
