@@ -31,7 +31,7 @@ func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) e
 		States:       states,
 		InputSymbols: mealyAutomaton.InputSymbols,
 		StateSignals: getMooreStateSignals(newStateToOldStateAndSignalMap),
-		Moves:        getMooreMoves(states, newStateToOldStateAndSignalMap, mealyAutomaton.InputSymbols, mealyAutomaton.Moves),
+		Moves:        getMooreMoves(mealyAutomaton, states, newStateToOldStateAndSignalMap),
 	}
 
 	return s.inputOutputAdapter.WriteMoore(outputFilename, mooreAutomaton)
@@ -108,18 +108,17 @@ func getMooreStateSignals(newStateToOldStateAndSignalMap map[string]DestinationS
 }
 
 func getMooreMoves(
+	mealyAutomaton MealyAutomaton,
 	states []string,
 	stateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
-	inputSymbols []string,
-	moves map[InitialStateAndInputSymbol]DestinationStateAndSignal,
 ) map[InitialStateAndInputSymbol]string {
 	oldStateToStateMap := getOldStateToStateMap(stateToOldStateAndSignalMap)
 
 	result := make(map[InitialStateAndInputSymbol]string)
 	for _, state := range states {
 		oldState := stateToOldStateAndSignalMap[state].State
-		for _, symbol := range inputSymbols {
-			oldDestination := moves[InitialStateAndInputSymbol{
+		for _, symbol := range mealyAutomaton.InputSymbols {
+			oldDestination := mealyAutomaton.Moves[InitialStateAndInputSymbol{
 				State:  oldState,
 				Symbol: symbol,
 			}]
