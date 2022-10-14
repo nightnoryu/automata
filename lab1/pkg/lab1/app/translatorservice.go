@@ -112,7 +112,7 @@ func getMooreMoves(
 	states []string,
 	stateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
 ) map[InitialStateAndInputSymbol]string {
-	oldStateToStateMap := getOldStateToStateMap(stateToOldStateAndSignalMap)
+	oldStateToStateMap := getOldStateAndSignalToStateMap(stateToOldStateAndSignalMap)
 
 	result := make(map[InitialStateAndInputSymbol]string)
 	for _, state := range states {
@@ -126,17 +126,19 @@ func getMooreMoves(
 			result[InitialStateAndInputSymbol{
 				State:  state,
 				Symbol: symbol,
-			}] = oldStateToStateMap[oldDestination.State]
+			}] = oldStateToStateMap[oldDestination]
 		}
 	}
 
 	return result
 }
 
-func getOldStateToStateMap(stateToOldStateAndSignalMap map[string]DestinationStateAndSignal) map[string]string {
-	result := make(map[string]string)
+func getOldStateAndSignalToStateMap(
+	stateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
+) map[DestinationStateAndSignal]string {
+	result := make(map[DestinationStateAndSignal]string)
 	for state, oldStateAndSignal := range stateToOldStateAndSignalMap {
-		result[oldStateAndSignal.State] = state
+		result[oldStateAndSignal] = state
 	}
 
 	return result
