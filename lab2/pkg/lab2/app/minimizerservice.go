@@ -258,9 +258,7 @@ func getNewStateName(number int) string {
 	return newStatesIdentifier + strconv.Itoa(number)
 }
 
-func simplifyMealyMoves(
-	mealyMoves MealyMoves,
-) MooreMoves {
+func simplifyMealyMoves(mealyMoves MealyMoves) MooreMoves {
 	result := make(MooreMoves)
 	for initialStateAndInputSymbol, destinationStateAndSignal := range mealyMoves {
 		result[initialStateAndInputSymbol] = destinationStateAndSignal.State
