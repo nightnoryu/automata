@@ -13,6 +13,7 @@ const (
 )
 
 func main() {
+	// TODO: remove unreachable states
 	args, err := parseArgs()
 	if err != nil {
 		log.Fatal(err)
