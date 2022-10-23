@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	"automata/common/infrastructure"
 	"automata/lab2/pkg/lab2/app"
-	"automata/lab2/pkg/lab2/infrastructure"
 )
 
 const (
@@ -13,7 +13,6 @@ const (
 )
 
 func main() {
-	// TODO: remove unreachable states
 	args, err := parseArgs()
 	if err != nil {
 		log.Fatal(err)

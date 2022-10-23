@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"automata/lab2/pkg/lab2/app"
+	"automata/common/app"
 )
 
 const (
