@@ -15,6 +15,12 @@ type DeterminatorService struct {
 }
 
 func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) error {
-	// TODO: implement
-	return nil
+	grammarAutomaton, err := s.inputOutputAdapter.GetGrammar(inputFilename)
+	if err != nil {
+		return err
+	}
+
+	// TODO: implement determination
+
+	return s.inputOutputAdapter.WriteGrammar(outputFilename, grammarAutomaton)
 }
