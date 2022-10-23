@@ -15,6 +15,6 @@ type DeterminatorService struct {
 }
 
 func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) error {
-	// TODO
+	// TODO: implement
 	return nil
 }

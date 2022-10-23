@@ -73,6 +73,11 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 	}, nil
 }
 
+func (a *inputOutputAdapter) GetGrammar(filename string) (app.GrammarAutomaton, error) {
+	// TODO: implement
+	return app.GrammarAutomaton{}, nil
+}
+
 func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -99,6 +104,11 @@ func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAuto
 	csvWriter.Comma = csvValuesSeparator
 
 	return csvWriter.WriteAll(serializeMoore(automaton))
+}
+
+func (a *inputOutputAdapter) WriteGrammar(filename string, automaton app.GrammarAutomaton) error {
+	// TODO: implement
+	return nil
 }
 
 func getMealyStates(records [][]string) []string {
