@@ -8,7 +8,7 @@ import (
 	"automata/common/app"
 )
 
-const newStatesIdentifier = "q"
+const newStatesIdentifier = "S"
 
 func NewMinimizerService(inputOutputAdapter app.InputOutputAdapter) *MinimizerService {
 	return &MinimizerService{
@@ -25,6 +25,8 @@ func (s *MinimizerService) MinimizeMealy(inputFilename, outputFilename string) e
 	if err != nil {
 		return err
 	}
+
+	mealyAutomaton = removeUnreachableMealyStates(mealyAutomaton)
 
 	groupToStatesMap, groupAmount := buildOneEquivalencyGroups(mealyAutomaton)
 	for {
@@ -51,6 +53,8 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 		return err
 	}
 
+	mooreAutomaton = removeUnreachableMooreStates(mooreAutomaton)
+
 	groupToStatesMap, groupAmount := buildZeroEquivalencyGroups(mooreAutomaton.StateSignals)
 	for {
 		previousGroupAmount := groupAmount
@@ -68,6 +72,77 @@ func (s *MinimizerService) MinimizeMoore(inputFilename, outputFilename string) e
 
 	minimizedAutomaton := buildMinimizedMoore(mooreAutomaton, groupToStatesMap)
 	return s.inputOutputAdapter.WriteMoore(outputFilename, minimizedAutomaton)
+}
+
+func removeUnreachableMealyStates(mealyAutomaton app.MealyAutomaton) app.MealyAutomaton {
+	reachableStatesMap := make(map[string]bool)
+	for initialStateAndInputSymbol, destinationStateAndSymbol := range mealyAutomaton.Moves {
+		if initialStateAndInputSymbol.State != destinationStateAndSymbol.State {
+			reachableStatesMap[destinationStateAndSymbol.State] = true
+		}
+	}
+
+	newStates := make([]string, 0, len(reachableStatesMap))
+	for _, state := range mealyAutomaton.States {
+		if reachableStatesMap[state] {
+			newStates = append(newStates, state)
+			continue
+		}
+
+		for _, inputSymbol := range mealyAutomaton.InputSymbols {
+			key := app.InitialStateAndInputSymbol{
+				State:  state,
+				Symbol: inputSymbol,
+			}
+
+			delete(mealyAutomaton.Moves, key)
+		}
+
+		log.Printf("removed unreachable state %s\n", state)
+	}
+
+	return app.MealyAutomaton{
+		States:       newStates,
+		InputSymbols: mealyAutomaton.InputSymbols,
+		Moves:        mealyAutomaton.Moves,
+	}
+}
+
+func removeUnreachableMooreStates(mooreAutomaton app.MooreAutomaton) app.MooreAutomaton {
+	reachableStatesMap := make(map[string]bool)
+	for initialStateAndInputSymbol, destinationState := range mooreAutomaton.Moves {
+		if initialStateAndInputSymbol.State != destinationState {
+			reachableStatesMap[destinationState] = true
+		}
+	}
+
+	newStates := make([]string, 0, len(reachableStatesMap))
+	for _, state := range mooreAutomaton.States {
+		if reachableStatesMap[state] {
+			newStates = append(newStates, state)
+			continue
+		}
+
+		for _, inputSymbol := range mooreAutomaton.InputSymbols {
+			key := app.InitialStateAndInputSymbol{
+				State:  state,
+				Symbol: inputSymbol,
+			}
+
+			delete(mooreAutomaton.Moves, key)
+		}
+
+		delete(mooreAutomaton.StateSignals, state)
+
+		log.Printf("removed unreachable state %s\n", state)
+	}
+
+	return app.MooreAutomaton{
+		States:       newStates,
+		InputSymbols: mooreAutomaton.InputSymbols,
+		StateSignals: mooreAutomaton.StateSignals,
+		Moves:        mooreAutomaton.Moves,
+	}
 }
 
 func buildOneEquivalencyGroups(mealyAutomaton app.MealyAutomaton) (groupToStatesMap map[int][]string, groupAmount int) {
