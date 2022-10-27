@@ -8,7 +8,7 @@ func NewGrammarInputOutputAdapter() app.GrammarInputOutputAdapter {
 
 type grammarInputOutputAdapter struct{}
 
-func (a *grammarInputOutputAdapter) GetGrammar(filename string) (app.Grammar, error) {
+func (a *grammarInputOutputAdapter) GetGrammar(filename string, side app.GrammarSide) (app.Grammar, error) {
 	// TODO implement me
 	panic("implement me")
 }
