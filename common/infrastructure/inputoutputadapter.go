@@ -76,10 +76,10 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 	}, nil
 }
 
-func (a *inputOutputAdapter) GetGrammar(filename string) (app.GrammarAutomaton, error) {
+func (a *inputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMovesAutomaton, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return app.GrammarAutomaton{}, err
+		return app.EmptyMovesAutomaton{}, err
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
@@ -89,16 +89,16 @@ func (a *inputOutputAdapter) GetGrammar(filename string) (app.GrammarAutomaton, 
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return app.GrammarAutomaton{}, err
+		return app.EmptyMovesAutomaton{}, err
 	}
 
-	states := getGrammarStates(records)
+	states := getStatesWithFinalIndication(records)
 	inputSymbols := getStateSignalsDependentInputSymbols(records)
 
-	return app.GrammarAutomaton{
+	return app.EmptyMovesAutomaton{
 		States:       states,
 		InputSymbols: inputSymbols,
-		Moves:        getGrammarMoves(records, states, inputSymbols),
+		Moves:        getMooreMoves(records, getPlainStatesFromGrammarStates(states), inputSymbols),
 	}, nil
 }
 
@@ -130,7 +130,7 @@ func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAuto
 	return csvWriter.WriteAll(serializeMoore(automaton))
 }
 
-func (a *inputOutputAdapter) WriteGrammar(filename string, automaton app.GrammarAutomaton) error {
+func (a *inputOutputAdapter) WriteWithEmpty(filename string, automaton app.EmptyMovesAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (a *inputOutputAdapter) WriteGrammar(filename string, automaton app.Grammar
 	csvWriter := csv.NewWriter(file)
 	csvWriter.Comma = csvValuesSeparator
 
-	return csvWriter.WriteAll(serializeGrammar(automaton))
+	return csvWriter.WriteAll(serializeWithEmpty(automaton))
 }
 
 func getMealyStates(records [][]string) []string {
@@ -230,13 +230,13 @@ func getMooreMoves(
 	return result
 }
 
-func getGrammarStates(records [][]string) []app.GrammarState {
+func getStatesWithFinalIndication(records [][]string) []app.StateWithFinalIndication {
 	states := records[1][1:]
 	finalIndicators := records[0][1:]
 
-	result := make([]app.GrammarState, 0, len(states))
+	result := make([]app.StateWithFinalIndication, 0, len(states))
 	for i, state := range states {
-		result = append(result, app.GrammarState{
+		result = append(result, app.StateWithFinalIndication{
 			State:   state,
 			IsFinal: finalIndicators[i] == grammarFinalStateIndicator,
 		})
@@ -245,9 +245,13 @@ func getGrammarStates(records [][]string) []app.GrammarState {
 	return result
 }
 
-func getGrammarMoves(records [][]string, states []app.GrammarState, inputSymbols []string) app.GrammarMoves {
-	// TODO
-	return nil
+func getPlainStatesFromGrammarStates(states []app.StateWithFinalIndication) []string {
+	result := make([]string, 0, len(states))
+	for _, state := range states {
+		result = append(result, state.State)
+	}
+
+	return result
 }
 
 func serializeMealy(automaton app.MealyAutomaton) [][]string {
@@ -306,7 +310,7 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 	return result
 }
 
-func serializeGrammar(automaton app.GrammarAutomaton) [][]string {
+func serializeWithEmpty(automaton app.EmptyMovesAutomaton) [][]string {
 	result := make([][]string, len(automaton.InputSymbols)+2)
 	for i := range result {
 		result[i] = make([]string, 0, len(automaton.States)+1)
@@ -333,7 +337,7 @@ func serializeGrammar(automaton app.GrammarAutomaton) [][]string {
 				Symbol: inputSymbol,
 			}
 
-			result[i+2] = append(result[i+2], strings.Join(automaton.Moves[key], grammarStatesSeparator))
+			result[i+2] = append(result[i+2], automaton.Moves[key])
 		}
 	}
 

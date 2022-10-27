@@ -3,11 +3,11 @@ package app
 type InputOutputAdapter interface {
 	GetMealy(filename string) (MealyAutomaton, error)
 	GetMoore(filename string) (MooreAutomaton, error)
-	GetGrammar(filename string) (GrammarAutomaton, error)
+	GetWithEmpty(filename string) (EmptyMovesAutomaton, error)
 
 	WriteMealy(filename string, automaton MealyAutomaton) error
 	WriteMoore(filename string, automaton MooreAutomaton) error
-	WriteGrammar(filename string, automaton GrammarAutomaton) error
+	WriteWithEmpty(filename string, automaton EmptyMovesAutomaton) error
 }
 
 type MealyAutomaton struct {
@@ -23,17 +23,15 @@ type MooreAutomaton struct {
 	Moves        MooreMoves
 }
 
-type GrammarAutomaton struct {
-	States       []GrammarState
+type EmptyMovesAutomaton struct {
+	States       []StateWithFinalIndication
 	InputSymbols []string
-	Moves        GrammarMoves
+	Moves        MooreMoves
 }
 
 type MealyMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal
 
 type MooreMoves = map[InitialStateAndInputSymbol]string
-
-type GrammarMoves = map[InitialStateAndInputSymbol][]string
 
 type InitialStateAndInputSymbol struct {
 	State  string
@@ -45,7 +43,7 @@ type DestinationStateAndSignal struct {
 	Signal string
 }
 
-type GrammarState struct {
+type StateWithFinalIndication struct {
 	State   string
 	IsFinal bool
 }

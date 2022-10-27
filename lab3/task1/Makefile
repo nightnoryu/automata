@@ -6,4 +6,4 @@ modules:
 
 .PHONY: build
 build: modules
-	go build -o bin/ ./cmd/lab3
+	go build -o bin/ ./cmd/task1

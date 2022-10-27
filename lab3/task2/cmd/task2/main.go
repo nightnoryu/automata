@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"automata/common/infrastructure"
-	"automata/lab3/pkg/lab3/app"
+	"automata/lab3/task2/pkg/task2/app"
 )
 
 func main() {
