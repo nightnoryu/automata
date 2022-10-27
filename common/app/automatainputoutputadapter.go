@@ -1,13 +1,11 @@
 package app
 
-type InputOutputAdapter interface {
+type AutomataInputOutputAdapter interface {
 	GetMealy(filename string) (MealyAutomaton, error)
 	GetMoore(filename string) (MooreAutomaton, error)
-	GetWithEmpty(filename string) (EmptyMovesAutomaton, error)
 
 	WriteMealy(filename string, automaton MealyAutomaton) error
 	WriteMoore(filename string, automaton MooreAutomaton) error
-	WriteWithEmpty(filename string, automaton EmptyMovesAutomaton) error
 }
 
 type MealyAutomaton struct {
@@ -23,12 +21,6 @@ type MooreAutomaton struct {
 	Moves        MooreMoves
 }
 
-type EmptyMovesAutomaton struct {
-	States       []StateWithFinalIndication
-	InputSymbols []string
-	Moves        MooreMoves
-}
-
 type MealyMoves map[InitialStateAndInputSymbol]DestinationStateAndSignal
 
 type MooreMoves = map[InitialStateAndInputSymbol]string
@@ -41,9 +33,4 @@ type InitialStateAndInputSymbol struct {
 type DestinationStateAndSignal struct {
 	State  string
 	Signal string
-}
-
-type StateWithFinalIndication struct {
-	State   string
-	IsFinal bool
 }

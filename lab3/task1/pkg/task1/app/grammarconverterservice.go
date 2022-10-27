@@ -3,7 +3,7 @@ package app
 import "automata/common/app"
 
 func NewGrammarConverterService(
-	inputOutputAdapter app.InputOutputAdapter,
+	inputOutputAdapter app.GrammarInputOutputAdapter,
 	determinatorService *DeterminatorService,
 ) *GrammarConverterService {
 	return &GrammarConverterService{
@@ -13,7 +13,7 @@ func NewGrammarConverterService(
 }
 
 type GrammarConverterService struct {
-	inputOutputAdapter  app.InputOutputAdapter
+	inputOutputAdapter  app.GrammarInputOutputAdapter
 	determinatorService *DeterminatorService
 }
 

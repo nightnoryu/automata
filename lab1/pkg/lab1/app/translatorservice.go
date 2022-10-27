@@ -10,14 +10,14 @@ import (
 
 const newStatesIdentifier = "S"
 
-func NewTranslatorService(inputOutputAdapter app.InputOutputAdapter) *TranslatorService {
+func NewTranslatorService(inputOutputAdapter app.AutomataInputOutputAdapter) *TranslatorService {
 	return &TranslatorService{
 		inputOutputAdapter: inputOutputAdapter,
 	}
 }
 
 type TranslatorService struct {
-	inputOutputAdapter app.InputOutputAdapter
+	inputOutputAdapter app.AutomataInputOutputAdapter
 }
 
 func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) error {

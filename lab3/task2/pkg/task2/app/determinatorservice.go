@@ -2,16 +2,14 @@ package app
 
 import "automata/common/app"
 
-const newStatesIdentifier = "S"
-
-func NewDeterminatorService(inputOutputAdapter app.InputOutputAdapter) *DeterminatorService {
+func NewDeterminatorService(inputOutputAdapter app.GrammarInputOutputAdapter) *DeterminatorService {
 	return &DeterminatorService{
 		inputOutputAdapter: inputOutputAdapter,
 	}
 }
 
 type DeterminatorService struct {
-	inputOutputAdapter app.InputOutputAdapter
+	inputOutputAdapter app.GrammarInputOutputAdapter
 }
 
 func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) error {

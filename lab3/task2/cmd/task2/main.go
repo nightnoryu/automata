@@ -13,7 +13,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	adapter := infrastructure.NewInputOutputAdapter()
+	adapter := infrastructure.NewGrammarInputOutputAdapter()
 	service := app.NewDeterminatorService(adapter)
 
 	if err = service.Determinate(args.InputFilename, args.OutputFilename); err != nil {

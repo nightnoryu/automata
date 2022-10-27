@@ -18,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	adapter := infrastructure.NewInputOutputAdapter()
+	adapter := infrastructure.NewAutomataInputOutputAdapter()
 	service := app.NewMinimizerService(adapter)
 
 	switch args.Mode {

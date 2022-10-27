@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	adapter := infrastructure.NewInputOutputAdapter()
+	adapter := infrastructure.NewGrammarInputOutputAdapter()
 	determinatorService := app.NewDeterminatorService()
 	service := app.NewGrammarConverterService(adapter, determinatorService)
 

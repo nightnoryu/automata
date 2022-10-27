@@ -16,13 +16,13 @@ const (
 	grammarStatesSeparator     = ","
 )
 
-func NewInputOutputAdapter() app.InputOutputAdapter {
-	return &inputOutputAdapter{}
+func NewAutomataInputOutputAdapter() app.AutomataInputOutputAdapter {
+	return &automataInputOutputAdapter{}
 }
 
-type inputOutputAdapter struct{}
+type automataInputOutputAdapter struct{}
 
-func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, error) {
+func (a *automataInputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return app.MealyAutomaton{}, err
@@ -48,7 +48,7 @@ func (a *inputOutputAdapter) GetMealy(filename string) (app.MealyAutomaton, erro
 	}, nil
 }
 
-func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, error) {
+func (a *automataInputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return app.MooreAutomaton{}, err
@@ -76,7 +76,7 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 	}, nil
 }
 
-func (a *inputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMovesAutomaton, error) {
+func (a *automataInputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMovesAutomaton, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return app.EmptyMovesAutomaton{}, err
@@ -102,7 +102,7 @@ func (a *inputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMovesAutoma
 	}, nil
 }
 
-func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
+func (a *automataInputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -116,7 +116,7 @@ func (a *inputOutputAdapter) WriteMealy(filename string, automaton app.MealyAuto
 	return csvWriter.WriteAll(serializeMealy(automaton))
 }
 
-func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
+func (a *automataInputOutputAdapter) WriteMoore(filename string, automaton app.MooreAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAuto
 	return csvWriter.WriteAll(serializeMoore(automaton))
 }
 
-func (a *inputOutputAdapter) WriteWithEmpty(filename string, automaton app.EmptyMovesAutomaton) error {
+func (a *automataInputOutputAdapter) WriteWithEmpty(filename string, automaton app.EmptyMovesAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
