@@ -4,18 +4,20 @@ import (
 	"log"
 	"sort"
 	"strconv"
+
+	"automata/common/app"
 )
 
 const newStatesIdentifier = "S"
 
-func NewTranslatorService(inputOutputAdapter InputOutputAdapter) *TranslatorService {
+func NewTranslatorService(inputOutputAdapter app.InputOutputAdapter) *TranslatorService {
 	return &TranslatorService{
 		inputOutputAdapter: inputOutputAdapter,
 	}
 }
 
 type TranslatorService struct {
-	inputOutputAdapter InputOutputAdapter
+	inputOutputAdapter app.InputOutputAdapter
 }
 
 func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) error {
@@ -27,7 +29,7 @@ func (s *TranslatorService) MealyToMoore(inputFilename, outputFilename string) e
 	newStateToOldStateAndSignalMap := buildNewMooreStates(mealyAutomaton)
 	states := getMooreStates(newStateToOldStateAndSignalMap)
 
-	mooreAutomaton := MooreAutomaton{
+	mooreAutomaton := app.MooreAutomaton{
 		States:       states,
 		InputSymbols: mealyAutomaton.InputSymbols,
 		StateSignals: getMooreStateSignals(newStateToOldStateAndSignalMap),
@@ -43,7 +45,7 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 		return err
 	}
 
-	mealyAutomaton := MealyAutomaton{
+	mealyAutomaton := app.MealyAutomaton{
 		States:       mooreAutomaton.States,
 		InputSymbols: mooreAutomaton.InputSymbols,
 		Moves:        getMealyMoves(mooreAutomaton.Moves, mooreAutomaton.StateSignals),
@@ -52,14 +54,14 @@ func (s *TranslatorService) MooreToMealy(inputFilename, outputFilename string) e
 	return s.inputOutputAdapter.WriteMealy(outputFilename, mealyAutomaton)
 }
 
-func buildNewMooreStates(mealyAutomaton MealyAutomaton) map[string]DestinationStateAndSignal {
-	processedStates := make(map[DestinationStateAndSignal]bool)
+func buildNewMooreStates(mealyAutomaton app.MealyAutomaton) map[string]app.DestinationStateAndSignal {
+	processedStates := make(map[app.DestinationStateAndSignal]bool)
 
-	result := make(map[string]DestinationStateAndSignal)
+	result := make(map[string]app.DestinationStateAndSignal)
 	counter := 0
 	for _, inputSymbol := range mealyAutomaton.InputSymbols {
 		for _, state := range mealyAutomaton.States {
-			key := InitialStateAndInputSymbol{
+			key := app.InitialStateAndInputSymbol{
 				State:  state,
 				Symbol: inputSymbol,
 			}
@@ -87,7 +89,7 @@ func getNewStateName(number int) string {
 	return newStatesIdentifier + strconv.Itoa(number)
 }
 
-func getMooreStates(newStateToOldStateAndSignalMap map[string]DestinationStateAndSignal) []string {
+func getMooreStates(newStateToOldStateAndSignalMap map[string]app.DestinationStateAndSignal) []string {
 	result := make([]string, 0, len(newStateToOldStateAndSignalMap))
 	for state := range newStateToOldStateAndSignalMap {
 		result = append(result, state)
@@ -98,7 +100,7 @@ func getMooreStates(newStateToOldStateAndSignalMap map[string]DestinationStateAn
 	return result
 }
 
-func getMooreStateSignals(newStateToOldStateAndSignalMap map[string]DestinationStateAndSignal) map[string]string {
+func getMooreStateSignals(newStateToOldStateAndSignalMap map[string]app.DestinationStateAndSignal) map[string]string {
 	result := make(map[string]string)
 	for newState, oldStateAndSignal := range newStateToOldStateAndSignalMap {
 		result[newState] = oldStateAndSignal.Signal
@@ -108,22 +110,22 @@ func getMooreStateSignals(newStateToOldStateAndSignalMap map[string]DestinationS
 }
 
 func getMooreMoves(
-	mealyAutomaton MealyAutomaton,
+	mealyAutomaton app.MealyAutomaton,
 	states []string,
-	stateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
-) map[InitialStateAndInputSymbol]string {
+	stateToOldStateAndSignalMap map[string]app.DestinationStateAndSignal,
+) map[app.InitialStateAndInputSymbol]string {
 	oldStateToStateMap := getOldStateAndSignalToStateMap(stateToOldStateAndSignalMap)
 
-	result := make(map[InitialStateAndInputSymbol]string)
+	result := make(map[app.InitialStateAndInputSymbol]string)
 	for _, state := range states {
 		oldState := stateToOldStateAndSignalMap[state].State
 		for _, symbol := range mealyAutomaton.InputSymbols {
-			oldDestination := mealyAutomaton.Moves[InitialStateAndInputSymbol{
+			oldDestination := mealyAutomaton.Moves[app.InitialStateAndInputSymbol{
 				State:  oldState,
 				Symbol: symbol,
 			}]
 
-			result[InitialStateAndInputSymbol{
+			result[app.InitialStateAndInputSymbol{
 				State:  state,
 				Symbol: symbol,
 			}] = oldStateToStateMap[oldDestination]
@@ -134,9 +136,9 @@ func getMooreMoves(
 }
 
 func getOldStateAndSignalToStateMap(
-	stateToOldStateAndSignalMap map[string]DestinationStateAndSignal,
-) map[DestinationStateAndSignal]string {
-	result := make(map[DestinationStateAndSignal]string)
+	stateToOldStateAndSignalMap map[string]app.DestinationStateAndSignal,
+) map[app.DestinationStateAndSignal]string {
+	result := make(map[app.DestinationStateAndSignal]string)
 	for state, oldStateAndSignal := range stateToOldStateAndSignalMap {
 		result[oldStateAndSignal] = state
 	}
@@ -145,12 +147,12 @@ func getOldStateAndSignalToStateMap(
 }
 
 func getMealyMoves(
-	moves map[InitialStateAndInputSymbol]string,
+	moves map[app.InitialStateAndInputSymbol]string,
 	stateToSignalMap map[string]string,
-) map[InitialStateAndInputSymbol]DestinationStateAndSignal {
-	result := make(map[InitialStateAndInputSymbol]DestinationStateAndSignal)
+) map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal {
+	result := make(map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal)
 	for initialStateAndInputSymbol, destinationState := range moves {
-		result[initialStateAndInputSymbol] = DestinationStateAndSignal{
+		result[initialStateAndInputSymbol] = app.DestinationStateAndSignal{
 			State:  destinationState,
 			Signal: stateToSignalMap[destinationState],
 		}

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
+	"automata/common/infrastructure"
 	"automata/lab1/pkg/lab1/app"
-	"automata/lab1/pkg/lab1/infrastructure"
 )
 
 const (

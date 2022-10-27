@@ -5,12 +5,15 @@ import (
 	"os"
 	"strings"
 
-	"automata/lab2/pkg/lab2/app"
+	"automata/common/app"
 )
 
 const (
 	stateAndSignalSeparator = "/"
 	csvValuesSeparator      = ';'
+
+	grammarFinalStateIndicator = "F"
+	grammarStatesSeparator     = ","
 )
 
 func NewInputOutputAdapter() app.InputOutputAdapter {
@@ -62,7 +65,7 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 	}
 
 	states := getMooreStates(records)
-	inputSymbols := getMooreInputSymbols(records)
+	inputSymbols := getStateSignalsDependentInputSymbols(records)
 	stateSignals := getMooreStateSignals(records)
 
 	return app.MooreAutomaton{
@@ -70,6 +73,32 @@ func (a *inputOutputAdapter) GetMoore(filename string) (app.MooreAutomaton, erro
 		InputSymbols: inputSymbols,
 		StateSignals: stateSignals,
 		Moves:        getMooreMoves(records, states, inputSymbols),
+	}, nil
+}
+
+func (a *inputOutputAdapter) GetGrammar(filename string) (app.GrammarAutomaton, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return app.GrammarAutomaton{}, err
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer file.Close()
+
+	csvReader := csv.NewReader(file)
+	csvReader.Comma = csvValuesSeparator
+
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return app.GrammarAutomaton{}, err
+	}
+
+	states := getGrammarStates(records)
+	inputSymbols := getStateSignalsDependentInputSymbols(records)
+
+	return app.GrammarAutomaton{
+		States:       states,
+		InputSymbols: inputSymbols,
+		Moves:        getGrammarMoves(records, states, inputSymbols),
 	}, nil
 }
 
@@ -99,6 +128,20 @@ func (a *inputOutputAdapter) WriteMoore(filename string, automaton app.MooreAuto
 	csvWriter.Comma = csvValuesSeparator
 
 	return csvWriter.WriteAll(serializeMoore(automaton))
+}
+
+func (a *inputOutputAdapter) WriteGrammar(filename string, automaton app.GrammarAutomaton) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer file.Close()
+
+	csvWriter := csv.NewWriter(file)
+	csvWriter.Comma = csvValuesSeparator
+
+	return csvWriter.WriteAll(serializeGrammar(automaton))
 }
 
 func getMealyStates(records [][]string) []string {
@@ -144,7 +187,7 @@ func getMooreStates(records [][]string) []string {
 	return records[1][1:]
 }
 
-func getMooreInputSymbols(records [][]string) []string {
+func getStateSignalsDependentInputSymbols(records [][]string) []string {
 	result := make([]string, 0, len(records)-2)
 	for _, row := range records[2:] {
 		result = append(result, row[0])
@@ -185,6 +228,26 @@ func getMooreMoves(
 	}
 
 	return result
+}
+
+func getGrammarStates(records [][]string) []app.GrammarState {
+	states := records[1][1:]
+	finalIndicators := records[0][1:]
+
+	result := make([]app.GrammarState, 0, len(states))
+	for i, state := range states {
+		result = append(result, app.GrammarState{
+			State:   state,
+			IsFinal: finalIndicators[i] == grammarFinalStateIndicator,
+		})
+	}
+
+	return result
+}
+
+func getGrammarMoves(records [][]string, states []app.GrammarState, inputSymbols []string) app.GrammarMoves {
+	// TODO
+	return nil
 }
 
 func serializeMealy(automaton app.MealyAutomaton) [][]string {
@@ -237,6 +300,40 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 			}
 
 			result[i+2] = append(result[i+2], automaton.Moves[key])
+		}
+	}
+
+	return result
+}
+
+func serializeGrammar(automaton app.GrammarAutomaton) [][]string {
+	result := make([][]string, len(automaton.InputSymbols)+2)
+	for i := range result {
+		result[i] = make([]string, 0, len(automaton.States)+1)
+	}
+
+	result[0] = append(result[0], "")
+	result[1] = append(result[1], "")
+	for _, state := range automaton.States {
+		if state.IsFinal {
+			result[0] = append(result[0], "F")
+		} else {
+			result[0] = append(result[0], "")
+		}
+
+		result[1] = append(result[1], state.State)
+	}
+
+	for i, inputSymbol := range automaton.InputSymbols {
+		result[i+2] = append(result[i+2], inputSymbol)
+
+		for _, state := range automaton.States {
+			key := app.InitialStateAndInputSymbol{
+				State:  state.State,
+				Symbol: inputSymbol,
+			}
+
+			result[i+2] = append(result[i+2], strings.Join(automaton.Moves[key], grammarStatesSeparator))
 		}
 	}
 
