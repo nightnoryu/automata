@@ -28,6 +28,7 @@ func (s *GrammarConverterService) ConvertLeftSideGrammarToAutomaton(inputFilenam
 	}
 
 	fmt.Println(grammar)
+	// TODO: convert
 
 	return nil
 }
@@ -39,6 +40,7 @@ func (s *GrammarConverterService) ConvertRightSideGrammarToAutomaton(inputFilena
 	}
 
 	fmt.Println(grammar)
+	// TODO: convert
 
 	return nil
 }

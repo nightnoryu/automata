@@ -76,32 +76,6 @@ func (a *automataInputOutputAdapter) GetMoore(filename string) (app.MooreAutomat
 	}, nil
 }
 
-func (a *automataInputOutputAdapter) GetWithEmpty(filename string) (app.GrammarAutomaton, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return app.GrammarAutomaton{}, err
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer file.Close()
-
-	csvReader := csv.NewReader(file)
-	csvReader.Comma = csvValuesSeparator
-
-	records, err := csvReader.ReadAll()
-	if err != nil {
-		return app.GrammarAutomaton{}, err
-	}
-
-	states := getStatesWithFinalIndication(records)
-	inputSymbols := getStateSignalsDependentInputSymbols(records)
-
-	return app.GrammarAutomaton{
-		States:       states,
-		InputSymbols: inputSymbols,
-		Moves:        getMooreMoves(records, getPlainStatesFromGrammarStates(states), inputSymbols),
-	}, nil
-}
-
 func (a *automataInputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -128,20 +102,6 @@ func (a *automataInputOutputAdapter) WriteMoore(filename string, automaton app.M
 	csvWriter.Comma = csvValuesSeparator
 
 	return csvWriter.WriteAll(serializeMoore(automaton))
-}
-
-func (a *automataInputOutputAdapter) WriteWithEmpty(filename string, automaton app.GrammarAutomaton) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer file.Close()
-
-	csvWriter := csv.NewWriter(file)
-	csvWriter.Comma = csvValuesSeparator
-
-	return csvWriter.WriteAll(serializeWithEmpty(automaton))
 }
 
 func getMealyStates(records [][]string) []string {
@@ -187,15 +147,6 @@ func getMooreStates(records [][]string) []string {
 	return records[1][1:]
 }
 
-func getStateSignalsDependentInputSymbols(records [][]string) []string {
-	result := make([]string, 0, len(records)-2)
-	for _, row := range records[2:] {
-		result = append(result, row[0])
-	}
-
-	return result
-}
-
 func getMooreStateSignals(records [][]string) map[string]string {
 	states := getMooreStates(records)
 	signals := records[0][1:]
@@ -225,30 +176,6 @@ func getMooreMoves(
 
 			result[stateAndInput] = move
 		}
-	}
-
-	return result
-}
-
-func getStatesWithFinalIndication(records [][]string) []app.StateWithFinalIndication {
-	states := records[1][1:]
-	finalIndicators := records[0][1:]
-
-	result := make([]app.StateWithFinalIndication, 0, len(states))
-	for i, state := range states {
-		result = append(result, app.StateWithFinalIndication{
-			State:   state,
-			IsFinal: finalIndicators[i] == grammarFinalStateIndicator,
-		})
-	}
-
-	return result
-}
-
-func getPlainStatesFromGrammarStates(states []app.StateWithFinalIndication) []string {
-	result := make([]string, 0, len(states))
-	for _, state := range states {
-		result = append(result, state.State)
 	}
 
 	return result

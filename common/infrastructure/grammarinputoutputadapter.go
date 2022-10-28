@@ -9,6 +9,13 @@ import (
 	"automata/common/app"
 )
 
+const (
+	nonTerminalRuleSeparator = " -> "
+	ruleSeparator            = " | "
+
+	finalStateIndication = "F"
+)
+
 func NewGrammarInputOutputAdapter() app.GrammarInputOutputAdapter {
 	return &grammarInputOutputAdapter{}
 }
@@ -29,26 +36,31 @@ func (a *grammarInputOutputAdapter) GetGrammar(filename string, side app.Grammar
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		rule := strings.Split(scanner.Text(), " -> ")
-		nonTerminals = append(nonTerminals, rule[0])
+		rule := strings.Split(scanner.Text(), nonTerminalRuleSeparator)
 
-		for _, resultSymbols := range strings.Split(rule[1], " | ") {
+		nonTerminal := rule[0]
+		nonTerminals = append(nonTerminals, nonTerminal)
+
+		for _, resultSymbols := range strings.Split(rule[1], ruleSeparator) {
 			if len(resultSymbols) == 2 {
+				left := resultSymbols[0]
+				right := resultSymbols[1]
+
 				if side == app.GrammarSideLeft {
-					uniqueTerminals[string(resultSymbols[1])] = true
-					rules[rule[0]] = append(rules[rule[0]], app.Rule{
-						NonTerminalSymbol: string(resultSymbols[0]),
-						TerminalSymbol:    string(resultSymbols[1]),
+					uniqueTerminals[string(right)] = true
+					rules[nonTerminal] = append(rules[nonTerminal], app.Rule{
+						NonTerminalSymbol: string(left),
+						TerminalSymbol:    string(right),
 					})
 				} else {
-					uniqueTerminals[string(resultSymbols[0])] = true
-					rules[rule[0]] = append(rules[rule[0]], app.Rule{
-						NonTerminalSymbol: string(resultSymbols[1]),
-						TerminalSymbol:    string(resultSymbols[0]),
+					uniqueTerminals[string(left)] = true
+					rules[nonTerminal] = append(rules[nonTerminal], app.Rule{
+						NonTerminalSymbol: string(right),
+						TerminalSymbol:    string(left),
 					})
 				}
 			} else {
-				rules[rule[0]] = append(rules[rule[0]], app.Rule{
+				rules[nonTerminal] = append(rules[nonTerminal], app.Rule{
 					TerminalSymbol: resultSymbols,
 				})
 			}
@@ -80,9 +92,22 @@ func (a *grammarInputOutputAdapter) GetWithEmpty(filename string) (app.GrammarAu
 	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
 
-	// TODO
+	csvReader := csv.NewReader(file)
+	csvReader.Comma = csvValuesSeparator
 
-	return app.GrammarAutomaton{}, nil
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return app.GrammarAutomaton{}, err
+	}
+
+	states := getStatesWithFinalIndication(records)
+	inputSymbols := getStateSignalsDependentInputSymbols(records)
+
+	return app.GrammarAutomaton{
+		States:       states,
+		InputSymbols: inputSymbols,
+		Moves:        getMooreMoves(records, getPlainStatesFromGrammarStates(states), inputSymbols),
+	}, nil
 }
 
 func (a *grammarInputOutputAdapter) WriteWithEmpty(filename string, automaton app.GrammarAutomaton) error {
@@ -96,10 +121,71 @@ func (a *grammarInputOutputAdapter) WriteWithEmpty(filename string, automaton ap
 	csvWriter := csv.NewWriter(file)
 	csvWriter.Comma = csvValuesSeparator
 
-	return csvWriter.WriteAll(serializeGrammar(automaton))
+	return csvWriter.WriteAll(serializeGrammarAutomaton(automaton))
 }
 
-func serializeGrammar(automaton app.GrammarAutomaton) [][]string {
-	// TODO
-	return nil
+func serializeGrammarAutomaton(automaton app.GrammarAutomaton) [][]string {
+	result := make([][]string, len(automaton.InputSymbols)+2)
+	for i := range result {
+		result[i] = make([]string, 0, len(automaton.States)+1)
+	}
+
+	result[0] = append(result[0], "")
+	result[1] = append(result[1], "")
+	for _, state := range automaton.States {
+		if state.IsFinal {
+			result[0] = append(result[0], finalStateIndication)
+		} else {
+			result[0] = append(result[0], "")
+		}
+		result[1] = append(result[1], state.State)
+	}
+
+	for i, inputSymbol := range automaton.InputSymbols {
+		result[i+2] = append(result[i+2], inputSymbol)
+
+		for _, state := range automaton.States {
+			key := app.InitialStateAndInputSymbol{
+				State:  state.State,
+				Symbol: inputSymbol,
+			}
+
+			result[i+2] = append(result[i+2], automaton.Moves[key])
+		}
+	}
+
+	return result
+}
+
+func getStatesWithFinalIndication(records [][]string) []app.StateWithFinalIndication {
+	states := records[1][1:]
+	finalIndicators := records[0][1:]
+
+	result := make([]app.StateWithFinalIndication, 0, len(states))
+	for i, state := range states {
+		result = append(result, app.StateWithFinalIndication{
+			State:   state,
+			IsFinal: finalIndicators[i] == grammarFinalStateIndicator,
+		})
+	}
+
+	return result
+}
+
+func getStateSignalsDependentInputSymbols(records [][]string) []string {
+	result := make([]string, 0, len(records)-2)
+	for _, row := range records[2:] {
+		result = append(result, row[0])
+	}
+
+	return result
+}
+
+func getPlainStatesFromGrammarStates(states []app.StateWithFinalIndication) []string {
+	result := make([]string, 0, len(states))
+	for _, state := range states {
+		result = append(result, state.State)
+	}
+
+	return result
 }
