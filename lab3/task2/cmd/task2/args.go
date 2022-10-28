@@ -7,12 +7,12 @@ import (
 
 func parseArgs() (*args, error) {
 	if len(os.Args) != 3 {
-		return nil, errors.New("usage: lab3 [input csv filename] [output csv filename]")
+		return nil, errors.New("usage: task2 [input csv filename] [output csv filename]")
 	}
 
 	return &args{
-		InputFilename:  os.Args[2],
-		OutputFilename: os.Args[3],
+		InputFilename:  os.Args[1],
+		OutputFilename: os.Args[2],
 	}, nil
 }
 

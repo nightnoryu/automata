@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"automata/common/infrastructure"
-	"automata/lab3/pkg/lab3/app"
+	"automata/lab3/task2/pkg/task2/app"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	adapter := infrastructure.NewInputOutputAdapter()
+	adapter := infrastructure.NewGrammarInputOutputAdapter()
 	service := app.NewDeterminatorService(adapter)
 
 	if err = service.Determinate(args.InputFilename, args.OutputFilename); err != nil {

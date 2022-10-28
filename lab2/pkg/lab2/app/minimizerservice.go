@@ -10,14 +10,14 @@ import (
 
 const newStatesIdentifier = "S"
 
-func NewMinimizerService(inputOutputAdapter app.InputOutputAdapter) *MinimizerService {
+func NewMinimizerService(inputOutputAdapter app.AutomataInputOutputAdapter) *MinimizerService {
 	return &MinimizerService{
 		inputOutputAdapter: inputOutputAdapter,
 	}
 }
 
 type MinimizerService struct {
-	inputOutputAdapter app.InputOutputAdapter
+	inputOutputAdapter app.AutomataInputOutputAdapter
 }
 
 func (s *MinimizerService) MinimizeMealy(inputFilename, outputFilename string) error {
