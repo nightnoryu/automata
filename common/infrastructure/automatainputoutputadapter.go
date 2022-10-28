@@ -76,10 +76,10 @@ func (a *automataInputOutputAdapter) GetMoore(filename string) (app.MooreAutomat
 	}, nil
 }
 
-func (a *automataInputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMovesAutomaton, error) {
+func (a *automataInputOutputAdapter) GetWithEmpty(filename string) (app.GrammarAutomaton, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return app.EmptyMovesAutomaton{}, err
+		return app.GrammarAutomaton{}, err
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
@@ -89,13 +89,13 @@ func (a *automataInputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMov
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return app.EmptyMovesAutomaton{}, err
+		return app.GrammarAutomaton{}, err
 	}
 
 	states := getStatesWithFinalIndication(records)
 	inputSymbols := getStateSignalsDependentInputSymbols(records)
 
-	return app.EmptyMovesAutomaton{
+	return app.GrammarAutomaton{
 		States:       states,
 		InputSymbols: inputSymbols,
 		Moves:        getMooreMoves(records, getPlainStatesFromGrammarStates(states), inputSymbols),
@@ -130,7 +130,7 @@ func (a *automataInputOutputAdapter) WriteMoore(filename string, automaton app.M
 	return csvWriter.WriteAll(serializeMoore(automaton))
 }
 
-func (a *automataInputOutputAdapter) WriteWithEmpty(filename string, automaton app.EmptyMovesAutomaton) error {
+func (a *automataInputOutputAdapter) WriteWithEmpty(filename string, automaton app.GrammarAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -310,7 +310,7 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 	return result
 }
 
-func serializeWithEmpty(automaton app.EmptyMovesAutomaton) [][]string {
+func serializeWithEmpty(automaton app.GrammarAutomaton) [][]string {
 	result := make([][]string, len(automaton.InputSymbols)+2)
 	for i := range result {
 		result[i] = make([]string, 0, len(automaton.States)+1)

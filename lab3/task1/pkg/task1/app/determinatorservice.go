@@ -1,12 +1,14 @@
 package app
 
+import "automata/common/app"
+
 func NewDeterminatorService() *DeterminatorService {
 	return &DeterminatorService{}
 }
 
 type DeterminatorService struct{}
 
-func (s *DeterminatorService) Determinate() error {
+func (s *DeterminatorService) Determinate(automaton app.GrammarAutomaton) app.GrammarAutomaton {
 	// TODO: determinate by model
-	return nil
+	return app.GrammarAutomaton{}
 }

@@ -1,6 +1,10 @@
 package app
 
-import "automata/common/app"
+import (
+	"fmt"
+
+	"automata/common/app"
+)
 
 func NewGrammarConverterService(
 	inputOutputAdapter app.GrammarInputOutputAdapter,
@@ -18,11 +22,23 @@ type GrammarConverterService struct {
 }
 
 func (s *GrammarConverterService) ConvertLeftSideGrammarToAutomaton(inputFilename, outputFilename string) error {
-	// TODO: model and conversion + determination
+	grammar, err := s.inputOutputAdapter.GetGrammar(inputFilename, app.GrammarSideLeft)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(grammar)
+
 	return nil
 }
 
 func (s *GrammarConverterService) ConvertRightSideGrammarToAutomaton(inputFilename, outputFilename string) error {
-	// TODO: model and conversion + determination
+	grammar, err := s.inputOutputAdapter.GetGrammar(inputFilename, app.GrammarSideRight)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(grammar)
+
 	return nil
 }
