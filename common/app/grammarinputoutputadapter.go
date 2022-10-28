@@ -34,6 +34,14 @@ type GrammarAutomaton struct {
 	Moves        MooreMoves
 }
 
+type NonDeterministicGrammarAutomaton struct {
+	States       []StateWithFinalIndication
+	InputSymbols []string
+	Moves        NonDeterministicMoves
+}
+
+type NonDeterministicMoves = map[InitialStateAndInputSymbol][]string
+
 type StateWithFinalIndication struct {
 	State   string
 	IsFinal bool

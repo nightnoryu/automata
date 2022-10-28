@@ -8,7 +8,7 @@ func NewDeterminatorService() *DeterminatorService {
 
 type DeterminatorService struct{}
 
-func (s *DeterminatorService) Determinate(automaton app.GrammarAutomaton) app.GrammarAutomaton {
+func (s *DeterminatorService) Determinate(automaton app.NonDeterministicGrammarAutomaton) app.GrammarAutomaton {
 	// TODO: determinate by model
 	return app.GrammarAutomaton{}
 }
