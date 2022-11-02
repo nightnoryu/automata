@@ -163,10 +163,10 @@ func getMooreMoves(
 	records [][]string,
 	states []string,
 	inputSymbols []string,
-) map[app.InitialStateAndInputSymbol]string {
+) app.MooreMoves {
 	transposedRecords := transpose(records[2:])
 
-	result := make(map[app.InitialStateAndInputSymbol]string)
+	result := make(app.MooreMoves)
 	for i, stateAndMoves := range transposedRecords[1:] {
 		for j, move := range stateAndMoves {
 			stateAndInput := app.InitialStateAndInputSymbol{
@@ -227,40 +227,6 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 		for _, state := range automaton.States {
 			key := app.InitialStateAndInputSymbol{
 				State:  state,
-				Symbol: inputSymbol,
-			}
-
-			result[i+2] = append(result[i+2], automaton.Moves[key])
-		}
-	}
-
-	return result
-}
-
-func serializeWithEmpty(automaton app.GrammarAutomaton) [][]string {
-	result := make([][]string, len(automaton.InputSymbols)+2)
-	for i := range result {
-		result[i] = make([]string, 0, len(automaton.States)+1)
-	}
-
-	result[0] = append(result[0], "")
-	result[1] = append(result[1], "")
-	for _, state := range automaton.States {
-		if state.IsFinal {
-			result[0] = append(result[0], "F")
-		} else {
-			result[0] = append(result[0], "")
-		}
-
-		result[1] = append(result[1], state.State)
-	}
-
-	for i, inputSymbol := range automaton.InputSymbols {
-		result[i+2] = append(result[i+2], inputSymbol)
-
-		for _, state := range automaton.States {
-			key := app.InitialStateAndInputSymbol{
-				State:  state.State,
 				Symbol: inputSymbol,
 			}
 

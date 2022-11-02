@@ -48,19 +48,19 @@ func (a *grammarInputOutputAdapter) GetGrammar(filename string, side app.Grammar
 
 				if side == app.GrammarSideLeft {
 					uniqueTerminals[string(right)] = true
-					rules[nonTerminal] = append(rules[nonTerminal], app.Rule{
+					rules[nonTerminal] = append(rules[nonTerminal], app.NonTerminalWithTerminal{
 						NonTerminalSymbol: string(left),
 						TerminalSymbol:    string(right),
 					})
 				} else {
 					uniqueTerminals[string(left)] = true
-					rules[nonTerminal] = append(rules[nonTerminal], app.Rule{
+					rules[nonTerminal] = append(rules[nonTerminal], app.NonTerminalWithTerminal{
 						NonTerminalSymbol: string(right),
 						TerminalSymbol:    string(left),
 					})
 				}
 			} else {
-				rules[nonTerminal] = append(rules[nonTerminal], app.Rule{
+				rules[nonTerminal] = append(rules[nonTerminal], app.NonTerminalWithTerminal{
 					TerminalSymbol: resultSymbols,
 				})
 			}
@@ -84,10 +84,10 @@ func (a *grammarInputOutputAdapter) GetGrammar(filename string, side app.Grammar
 	}, nil
 }
 
-func (a *grammarInputOutputAdapter) GetWithEmpty(filename string) (app.GrammarAutomaton, error) {
+func (a *grammarInputOutputAdapter) GetFinite(filename string) (app.FiniteAutomaton, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return app.GrammarAutomaton{}, err
+		return app.FiniteAutomaton{}, err
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer file.Close()
@@ -97,20 +97,20 @@ func (a *grammarInputOutputAdapter) GetWithEmpty(filename string) (app.GrammarAu
 
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return app.GrammarAutomaton{}, err
+		return app.FiniteAutomaton{}, err
 	}
 
 	states := getStatesWithFinalIndication(records)
 	inputSymbols := getStateSignalsDependentInputSymbols(records)
 
-	return app.GrammarAutomaton{
+	return app.FiniteAutomaton{
 		States:       states,
 		InputSymbols: inputSymbols,
 		Moves:        getMooreMoves(records, getPlainStatesFromGrammarStates(states), inputSymbols),
 	}, nil
 }
 
-func (a *grammarInputOutputAdapter) WriteWithEmpty(filename string, automaton app.GrammarAutomaton) error {
+func (a *grammarInputOutputAdapter) WriteFinite(filename string, automaton app.FiniteAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -121,10 +121,10 @@ func (a *grammarInputOutputAdapter) WriteWithEmpty(filename string, automaton ap
 	csvWriter := csv.NewWriter(file)
 	csvWriter.Comma = csvValuesSeparator
 
-	return csvWriter.WriteAll(serializeGrammarAutomaton(automaton))
+	return csvWriter.WriteAll(serializeFinite(automaton))
 }
 
-func serializeGrammarAutomaton(automaton app.GrammarAutomaton) [][]string {
+func serializeFinite(automaton app.FiniteAutomaton) [][]string {
 	result := make([][]string, len(automaton.InputSymbols)+2)
 	for i := range result {
 		result[i] = make([]string, 0, len(automaton.States)+1)

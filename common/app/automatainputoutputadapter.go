@@ -34,3 +34,5 @@ type DestinationStateAndSignal struct {
 	State  string
 	Signal string
 }
+
+const EmptySymbol = "e"

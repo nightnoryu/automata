@@ -2,9 +2,9 @@ package app
 
 type GrammarInputOutputAdapter interface {
 	GetGrammar(filename string, side GrammarSide) (Grammar, error)
-	GetWithEmpty(filename string) (GrammarAutomaton, error)
+	GetFinite(filename string) (FiniteAutomaton, error)
 
-	WriteWithEmpty(filename string, automaton GrammarAutomaton) error
+	WriteFinite(filename string, automaton FiniteAutomaton) error
 }
 
 type GrammarSide int
@@ -21,20 +21,20 @@ type Grammar struct {
 	Side               GrammarSide
 }
 
-type Rules = map[string][]Rule
+type Rules = map[string][]NonTerminalWithTerminal
 
-type Rule struct {
+type NonTerminalWithTerminal struct {
 	NonTerminalSymbol string
 	TerminalSymbol    string
 }
 
-type GrammarAutomaton struct {
+type FiniteAutomaton struct {
 	States       []StateWithFinalIndication
 	InputSymbols []string
 	Moves        MooreMoves
 }
 
-type NonDeterministicGrammarAutomaton struct {
+type NonDeterministicFiniteAutomaton struct {
 	States       []StateWithFinalIndication
 	InputSymbols []string
 	Moves        NonDeterministicMoves
