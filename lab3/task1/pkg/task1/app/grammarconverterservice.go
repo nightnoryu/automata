@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"automata/common/app"
 )
 
@@ -22,8 +24,12 @@ func (s *GrammarConverterService) ConvertLeftSideGrammarToAutomaton(inputFilenam
 		return err
 	}
 
+	fmt.Println(grammar)
+
 	rightSideGrammar := leftSideToRightSideGrammar(grammar)
 	automaton := rightSideGrammarToAutomaton(rightSideGrammar)
+
+	fmt.Println(rightSideGrammar)
 
 	return s.inputOutputAdapter.WriteFinite(outputFilename, automaton)
 }
@@ -40,22 +46,26 @@ func (s *GrammarConverterService) ConvertRightSideGrammarToAutomaton(inputFilena
 }
 
 func leftSideToRightSideGrammar(grammar app.Grammar) app.Grammar {
-	newNonTerminals := make([]string, len(grammar.NonTerminalSymbols))
-	copy(newNonTerminals, grammar.NonTerminalSymbols)
+	newNonTerminals := make([]string, 0, len(grammar.NonTerminalSymbols))
 	newNonTerminals = append(newNonTerminals, startStateFromLeft)
+	for _, nonTerminal := range grammar.NonTerminalSymbols {
+		newNonTerminals = append(newNonTerminals, nonTerminal)
+	}
 
 	newRules := make(app.Rules)
-	for sourceNonTerminal, rules := range grammar.Rules {
-		for _, rule := range rules {
-			nonTerminal := rule.NonTerminalSymbol
+	for sourceNonTerminalWithTerminal, destinationNonTerminals := range grammar.Rules {
+		for _, destinationNonTerminal := range destinationNonTerminals {
+			nonTerminal := destinationNonTerminal
 			if len(nonTerminal) == 0 {
 				nonTerminal = startStateFromLeft
 			}
 
-			newRules[nonTerminal] = append(newRules[nonTerminal], app.NonTerminalWithTerminal{
-				NonTerminalSymbol: sourceNonTerminal,
-				TerminalSymbol:    rule.TerminalSymbol,
-			})
+			key := app.NonTerminalWithTerminal{
+				NonTerminalSymbol: nonTerminal,
+				TerminalSymbol:    sourceNonTerminalWithTerminal.TerminalSymbol,
+			}
+
+			newRules[key] = append(newRules[key], sourceNonTerminalWithTerminal.NonTerminalSymbol)
 		}
 	}
 

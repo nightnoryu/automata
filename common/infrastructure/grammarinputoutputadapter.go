@@ -38,32 +38,30 @@ func (a *grammarInputOutputAdapter) GetGrammar(filename string, side app.Grammar
 	for scanner.Scan() {
 		rule := strings.Split(scanner.Text(), nonTerminalRuleSeparator)
 
-		nonTerminal := rule[0]
-		nonTerminals = append(nonTerminals, nonTerminal)
+		sourceNonTerminal := rule[0]
+		nonTerminals = append(nonTerminals, sourceNonTerminal)
 
 		for _, resultSymbols := range strings.Split(rule[1], ruleSeparator) {
-			if len(resultSymbols) == 2 {
-				left := resultSymbols[0]
-				right := resultSymbols[1]
+			var destinationNonTerminal, terminal string
 
-				if side == app.GrammarSideLeft {
-					uniqueTerminals[string(right)] = true
-					rules[nonTerminal] = append(rules[nonTerminal], app.NonTerminalWithTerminal{
-						NonTerminalSymbol: string(left),
-						TerminalSymbol:    string(right),
-					})
-				} else {
-					uniqueTerminals[string(left)] = true
-					rules[nonTerminal] = append(rules[nonTerminal], app.NonTerminalWithTerminal{
-						NonTerminalSymbol: string(right),
-						TerminalSymbol:    string(left),
-					})
-				}
-			} else {
-				rules[nonTerminal] = append(rules[nonTerminal], app.NonTerminalWithTerminal{
-					TerminalSymbol: resultSymbols,
-				})
+			if len(resultSymbols) == 1 {
+				terminal = resultSymbols
+			} else if side == app.GrammarSideLeft {
+				destinationNonTerminal = string(resultSymbols[0])
+				terminal = string(resultSymbols[1])
+			} else if side == app.GrammarSideRight {
+				destinationNonTerminal = string(resultSymbols[1])
+				terminal = string(resultSymbols[0])
 			}
+
+			uniqueTerminals[terminal] = true
+
+			key := app.NonTerminalWithTerminal{
+				NonTerminalSymbol: sourceNonTerminal,
+				TerminalSymbol:    terminal,
+			}
+
+			rules[key] = append(rules[key], destinationNonTerminal)
 		}
 	}
 

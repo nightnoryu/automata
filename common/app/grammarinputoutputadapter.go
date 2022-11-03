@@ -21,7 +21,7 @@ type Grammar struct {
 	Side               GrammarSide
 }
 
-type Rules = map[string][]NonTerminalWithTerminal
+type Rules = map[NonTerminalWithTerminal][]string
 
 type NonTerminalWithTerminal struct {
 	NonTerminalSymbol string
