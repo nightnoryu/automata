@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"os"
+	"sort"
 	"strings"
 
 	"automata/common/app"
@@ -69,14 +70,9 @@ func (a *grammarInputOutputAdapter) GetGrammar(filename string, side app.Grammar
 		return app.Grammar{}, err
 	}
 
-	terminals := make([]string, 0, len(uniqueTerminals))
-	for terminal := range uniqueTerminals {
-		terminals = append(terminals, terminal)
-	}
-
 	return app.Grammar{
 		NonTerminalSymbols: nonTerminals,
-		TerminalSymbols:    terminals,
+		TerminalSymbols:    uniqueTerminalsToFinalTerminals(uniqueTerminals),
 		Rules:              rules,
 		Side:               side,
 	}, nil
@@ -184,6 +180,17 @@ func getPlainStatesFromGrammarStates(states []app.StateWithFinalIndication) []st
 	for _, state := range states {
 		result = append(result, state.State)
 	}
+
+	return result
+}
+
+func uniqueTerminalsToFinalTerminals(uniqueTerminals map[string]bool) []string {
+	result := make([]string, 0, len(uniqueTerminals))
+	for terminal := range uniqueTerminals {
+		result = append(result, terminal)
+	}
+
+	sort.Strings(result)
 
 	return result
 }
