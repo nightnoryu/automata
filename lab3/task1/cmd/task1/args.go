@@ -11,7 +11,7 @@ func parseArgs() (*args, error) {
 	}
 
 	return &args{
-		Mode:           os.Args[0],
+		Mode:           os.Args[1],
 		InputFilename:  os.Args[2],
 		OutputFilename: os.Args[3],
 	}, nil

@@ -76,32 +76,6 @@ func (a *automataInputOutputAdapter) GetMoore(filename string) (app.MooreAutomat
 	}, nil
 }
 
-func (a *automataInputOutputAdapter) GetWithEmpty(filename string) (app.EmptyMovesAutomaton, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return app.EmptyMovesAutomaton{}, err
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer file.Close()
-
-	csvReader := csv.NewReader(file)
-	csvReader.Comma = csvValuesSeparator
-
-	records, err := csvReader.ReadAll()
-	if err != nil {
-		return app.EmptyMovesAutomaton{}, err
-	}
-
-	states := getStatesWithFinalIndication(records)
-	inputSymbols := getStateSignalsDependentInputSymbols(records)
-
-	return app.EmptyMovesAutomaton{
-		States:       states,
-		InputSymbols: inputSymbols,
-		Moves:        getMooreMoves(records, getPlainStatesFromGrammarStates(states), inputSymbols),
-	}, nil
-}
-
 func (a *automataInputOutputAdapter) WriteMealy(filename string, automaton app.MealyAutomaton) error {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -128,20 +102,6 @@ func (a *automataInputOutputAdapter) WriteMoore(filename string, automaton app.M
 	csvWriter.Comma = csvValuesSeparator
 
 	return csvWriter.WriteAll(serializeMoore(automaton))
-}
-
-func (a *automataInputOutputAdapter) WriteWithEmpty(filename string, automaton app.EmptyMovesAutomaton) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer file.Close()
-
-	csvWriter := csv.NewWriter(file)
-	csvWriter.Comma = csvValuesSeparator
-
-	return csvWriter.WriteAll(serializeWithEmpty(automaton))
 }
 
 func getMealyStates(records [][]string) []string {
@@ -187,15 +147,6 @@ func getMooreStates(records [][]string) []string {
 	return records[1][1:]
 }
 
-func getStateSignalsDependentInputSymbols(records [][]string) []string {
-	result := make([]string, 0, len(records)-2)
-	for _, row := range records[2:] {
-		result = append(result, row[0])
-	}
-
-	return result
-}
-
 func getMooreStateSignals(records [][]string) map[string]string {
 	states := getMooreStates(records)
 	signals := records[0][1:]
@@ -212,10 +163,10 @@ func getMooreMoves(
 	records [][]string,
 	states []string,
 	inputSymbols []string,
-) map[app.InitialStateAndInputSymbol]string {
+) app.MooreMoves {
 	transposedRecords := transpose(records[2:])
 
-	result := make(map[app.InitialStateAndInputSymbol]string)
+	result := make(app.MooreMoves)
 	for i, stateAndMoves := range transposedRecords[1:] {
 		for j, move := range stateAndMoves {
 			stateAndInput := app.InitialStateAndInputSymbol{
@@ -225,30 +176,6 @@ func getMooreMoves(
 
 			result[stateAndInput] = move
 		}
-	}
-
-	return result
-}
-
-func getStatesWithFinalIndication(records [][]string) []app.StateWithFinalIndication {
-	states := records[1][1:]
-	finalIndicators := records[0][1:]
-
-	result := make([]app.StateWithFinalIndication, 0, len(states))
-	for i, state := range states {
-		result = append(result, app.StateWithFinalIndication{
-			State:   state,
-			IsFinal: finalIndicators[i] == grammarFinalStateIndicator,
-		})
-	}
-
-	return result
-}
-
-func getPlainStatesFromGrammarStates(states []app.StateWithFinalIndication) []string {
-	result := make([]string, 0, len(states))
-	for _, state := range states {
-		result = append(result, state.State)
 	}
 
 	return result
@@ -300,40 +227,6 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 		for _, state := range automaton.States {
 			key := app.InitialStateAndInputSymbol{
 				State:  state,
-				Symbol: inputSymbol,
-			}
-
-			result[i+2] = append(result[i+2], automaton.Moves[key])
-		}
-	}
-
-	return result
-}
-
-func serializeWithEmpty(automaton app.EmptyMovesAutomaton) [][]string {
-	result := make([][]string, len(automaton.InputSymbols)+2)
-	for i := range result {
-		result[i] = make([]string, 0, len(automaton.States)+1)
-	}
-
-	result[0] = append(result[0], "")
-	result[1] = append(result[1], "")
-	for _, state := range automaton.States {
-		if state.IsFinal {
-			result[0] = append(result[0], "F")
-		} else {
-			result[0] = append(result[0], "")
-		}
-
-		result[1] = append(result[1], state.State)
-	}
-
-	for i, inputSymbol := range automaton.InputSymbols {
-		result[i+2] = append(result[i+2], inputSymbol)
-
-		for _, state := range automaton.States {
-			key := app.InitialStateAndInputSymbol{
-				State:  state.State,
 				Symbol: inputSymbol,
 			}
 

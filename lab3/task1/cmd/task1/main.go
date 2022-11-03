@@ -20,8 +20,7 @@ func main() {
 	}
 
 	adapter := infrastructure.NewGrammarInputOutputAdapter()
-	determinatorService := app.NewDeterminatorService()
-	service := app.NewGrammarConverterService(adapter, determinatorService)
+	service := app.NewGrammarConverterService(adapter)
 
 	switch args.Mode {
 	case leftSide:
