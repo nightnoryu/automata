@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"automata/common/app"
 )
@@ -25,12 +26,8 @@ func (s *GrammarConverterService) ConvertLeftSideGrammarToAutomaton(inputFilenam
 		return err
 	}
 
-	fmt.Println(grammar)
-
 	rightSideGrammar := leftSideToRightSideGrammar(grammar)
 	automaton := rightSideGrammarToAutomaton(rightSideGrammar)
-
-	fmt.Println(rightSideGrammar)
 
 	return s.inputOutputAdapter.WriteFinite(outputFilename, automaton)
 }
@@ -41,7 +38,11 @@ func (s *GrammarConverterService) ConvertRightSideGrammarToAutomaton(inputFilena
 		return err
 	}
 
+	fmt.Println(grammar)
+
 	automaton := rightSideGrammarToAutomaton(grammar)
+
+	fmt.Println(automaton)
 
 	return s.inputOutputAdapter.WriteFinite(outputFilename, automaton)
 }
@@ -105,7 +106,13 @@ func rightSideGrammarToAutomaton(grammar app.Grammar) app.FiniteAutomaton {
 				continue
 			}
 
-			// TODO: shit continues
+			combinedDestinationNonTerminals := combineSymbols(destinationNonTerminals)
+			combinedMoves := combineMoves(grammar.Rules, moves, grammar.TerminalSymbols, combinedDestinationNonTerminals)
+
+			for initialStateAndInputSymbol, destinationState := range combinedMoves {
+				moves[initialStateAndInputSymbol] = destinationState
+				queue = append(queue, destinationState)
+			}
 		}
 	}
 
@@ -128,6 +135,55 @@ func uniqueStatesToFinalStates(uniqueStates map[string]bool) []app.StateWithFina
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].State < result[j].State
 	})
+
+	return result
+}
+
+func combineSymbols(symbols []string) []string {
+	symbolsMap := make(map[string]bool)
+	for _, terminal := range symbols {
+		symbolsMap[terminal] = true
+	}
+
+	var result []string
+	for symbol := range symbolsMap {
+		result = append(result, symbol)
+	}
+
+	sort.Strings(result)
+
+	return result
+}
+
+func combineMoves(
+	initialRules app.Rules,
+	newMoves app.MooreMoves,
+	inputSymbols []string,
+	combinedDestinationNonTerminals []string,
+) app.MooreMoves {
+	result := make(app.MooreMoves)
+	for _, sourceNonTerminal := range combinedDestinationNonTerminals {
+		for _, inputSymbol := range inputSymbols {
+			key := app.NonTerminalWithTerminal{
+				NonTerminalSymbol: sourceNonTerminal,
+				TerminalSymbol:    inputSymbol,
+			}
+
+			newKey := app.InitialStateAndInputSymbol{
+				State:  sourceNonTerminal,
+				Symbol: inputSymbol,
+			}
+
+			if destinationState, ok := newMoves[newKey]; ok {
+				result[newKey] = destinationState
+				continue
+			}
+
+			if destinationStates, ok := initialRules[key]; ok {
+				result[newKey] = strings.Join(combineSymbols(destinationStates), "")
+			}
+		}
+	}
 
 	return result
 }
