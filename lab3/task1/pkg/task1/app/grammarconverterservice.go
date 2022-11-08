@@ -104,9 +104,19 @@ func rightSideGrammarToAutomaton(grammar app.Grammar) app.FiniteAutomaton {
 				TerminalSymbol:    terminalSymbol,
 			}
 
+			movesKey := app.InitialStateAndInputSymbol{
+				State:  sourceNonTerminal,
+				Symbol: terminalSymbol,
+			}
+
 			destinationNonTerminals, ok := grammar.Rules[key]
 			if !ok {
-				continue
+				destinationNonTerminal, ok := moves[movesKey]
+				if !ok {
+					continue
+				}
+
+				destinationNonTerminals = append(destinationNonTerminals, destinationNonTerminal)
 			}
 
 			newState := finalStateForRight
@@ -115,11 +125,11 @@ func rightSideGrammarToAutomaton(grammar app.Grammar) app.FiniteAutomaton {
 				newState = strings.Join(combinedDestinationNonTerminals, "")
 			}
 
-			movesKey := app.InitialStateAndInputSymbol{
-				State:  sourceNonTerminal,
-				Symbol: terminalSymbol,
+			combinedMoves := combineMoves(combinedDestinationNonTerminals, grammar)
+			for stateAndSymbol, destinationState := range combinedMoves {
+				moves[stateAndSymbol] = destinationState
+				queue = append(queue, destinationState)
 			}
-			moves[movesKey] = newState
 
 			queue = append(queue, newState)
 		}
@@ -165,6 +175,33 @@ func combineSymbols(symbols []string) []string {
 	}
 
 	sort.Strings(result)
+
+	return result
+}
+
+func combineMoves(nonTerminals []string, grammar app.Grammar) map[app.InitialStateAndInputSymbol]string {
+	result := make(map[app.InitialStateAndInputSymbol]string)
+	for _, nonTerminalSymbol := range nonTerminals {
+		for _, terminalSymbol := range grammar.TerminalSymbols {
+			key := app.NonTerminalWithTerminal{
+				NonTerminalSymbol: nonTerminalSymbol,
+				TerminalSymbol:    terminalSymbol,
+			}
+
+			movesKey := app.InitialStateAndInputSymbol{
+				State:  nonTerminalSymbol,
+				Symbol: terminalSymbol,
+			}
+
+			destinationNonTerminals, ok := grammar.Rules[key]
+			if !ok {
+				continue
+			}
+
+			destinationState := strings.Join(combineSymbols(destinationNonTerminals), "")
+			result[movesKey] = destinationState
+		}
+	}
 
 	return result
 }
