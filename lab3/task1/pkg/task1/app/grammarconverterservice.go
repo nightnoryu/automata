@@ -8,7 +8,10 @@ import (
 	"automata/common/app"
 )
 
-const startStateFromLeft = "H"
+const (
+	startStateFromLeft = "H"
+	finalStateForRight = "F"
+)
 
 func NewGrammarConverterService(inputOutputAdapter app.GrammarInputOutputAdapter) *GrammarConverterService {
 	return &GrammarConverterService{
@@ -38,11 +41,11 @@ func (s *GrammarConverterService) ConvertRightSideGrammarToAutomaton(inputFilena
 		return err
 	}
 
-	fmt.Println(grammar)
+	fmt.Println("grammar: ", grammar)
 
 	automaton := rightSideGrammarToAutomaton(grammar)
 
-	fmt.Println(automaton)
+	fmt.Println("automaton: ", automaton)
 
 	return s.inputOutputAdapter.WriteFinite(outputFilename, automaton)
 }
@@ -106,13 +109,19 @@ func rightSideGrammarToAutomaton(grammar app.Grammar) app.FiniteAutomaton {
 				continue
 			}
 
+			newState := finalStateForRight
 			combinedDestinationNonTerminals := combineSymbols(destinationNonTerminals)
-			combinedMoves := combineMoves(grammar.Rules, moves, grammar.TerminalSymbols, combinedDestinationNonTerminals)
-
-			for initialStateAndInputSymbol, destinationState := range combinedMoves {
-				moves[initialStateAndInputSymbol] = destinationState
-				queue = append(queue, destinationState)
+			if len(destinationNonTerminals) > 0 {
+				newState = strings.Join(combinedDestinationNonTerminals, "")
 			}
+
+			movesKey := app.InitialStateAndInputSymbol{
+				State:  sourceNonTerminal,
+				Symbol: terminalSymbol,
+			}
+			moves[movesKey] = newState
+
+			queue = append(queue, newState)
 		}
 	}
 
@@ -147,43 +156,15 @@ func combineSymbols(symbols []string) []string {
 
 	var result []string
 	for symbol := range symbolsMap {
-		result = append(result, symbol)
+		resultingSymbol := finalStateForRight
+		if len(symbol) > 0 {
+			resultingSymbol = symbol
+		}
+
+		result = append(result, resultingSymbol)
 	}
 
 	sort.Strings(result)
-
-	return result
-}
-
-func combineMoves(
-	initialRules app.Rules,
-	newMoves app.MooreMoves,
-	inputSymbols []string,
-	combinedDestinationNonTerminals []string,
-) app.MooreMoves {
-	result := make(app.MooreMoves)
-	for _, sourceNonTerminal := range combinedDestinationNonTerminals {
-		for _, inputSymbol := range inputSymbols {
-			key := app.NonTerminalWithTerminal{
-				NonTerminalSymbol: sourceNonTerminal,
-				TerminalSymbol:    inputSymbol,
-			}
-
-			newKey := app.InitialStateAndInputSymbol{
-				State:  sourceNonTerminal,
-				Symbol: inputSymbol,
-			}
-
-			if destinationState, ok := newMoves[newKey]; ok {
-				result[newKey] = destinationState
-				continue
-			}
-
-			if destinationStates, ok := initialRules[key]; ok {
-				result[newKey] = strings.Join(combineSymbols(destinationStates), "")
-			}
-		}
-	}
 
 	return result
 }
