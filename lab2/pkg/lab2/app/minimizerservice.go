@@ -10,14 +10,14 @@ import (
 
 const newStatesIdentifier = "S"
 
-func NewMinimizerService(inputOutputAdapter app.AutomataInputOutputAdapter) *MinimizerService {
+func NewMinimizerService(inputOutputAdapter app.MealyMooreInputOutputAdapter) *MinimizerService {
 	return &MinimizerService{
 		inputOutputAdapter: inputOutputAdapter,
 	}
 }
 
 type MinimizerService struct {
-	inputOutputAdapter app.AutomataInputOutputAdapter
+	inputOutputAdapter app.MealyMooreInputOutputAdapter
 }
 
 func (s *MinimizerService) MinimizeMealy(inputFilename, outputFilename string) error {
@@ -190,7 +190,7 @@ func buildZeroEquivalencyGroups(stateSignals map[string]string) (groupToStatesMa
 func buildNextEquivalencyGroups(
 	groupToStatesMap map[int][]string,
 	inputSymbols []string,
-	moves app.MooreMoves,
+	moves app.DeterministicMoves,
 ) (stateToNewGroupMap map[int][]string, groupAmount int) {
 	stateToNewGroupMap = make(map[int][]string)
 	stateToGroupMap := buildStateToGroupMap(groupToStatesMap)
@@ -248,7 +248,7 @@ func buildMinimizedMealy(mealyAutomaton app.MealyAutomaton, groupToStatesMap map
 		)
 	}
 
-	newMoves := make(app.MealyMoves)
+	newMoves := make(app.MovesWithSignals)
 
 	for _, states := range groupToStatesMap {
 		baseState := states[0]
@@ -303,7 +303,7 @@ func buildMinimizedMoore(mooreAutomaton app.MooreAutomaton, groupToStatesMap map
 		)
 	}
 
-	newMoves := make(app.MooreMoves)
+	newMoves := make(app.DeterministicMoves)
 
 	for _, states := range groupToStatesMap {
 		baseState := states[0]
@@ -335,8 +335,8 @@ func getNewStateName(number int) string {
 	return newStatesIdentifier + strconv.Itoa(number)
 }
 
-func simplifyMealyMoves(mealyMoves app.MealyMoves) app.MooreMoves {
-	result := make(app.MooreMoves)
+func simplifyMealyMoves(mealyMoves app.MovesWithSignals) app.DeterministicMoves {
+	result := make(app.DeterministicMoves)
 	for initialStateAndInputSymbol, destinationStateAndSignal := range mealyMoves {
 		result[initialStateAndInputSymbol] = destinationStateAndSignal.State
 	}

@@ -1,38 +1,27 @@
 package app
 
-import "automata/common/app"
+import (
+	"automata/common/app"
+	"fmt"
+)
 
-func NewDeterminatorService(inputOutputAdapter app.GrammarInputOutputAdapter) *DeterminatorService {
+func NewDeterminatorService(inputOutputAdapter app.FiniteInputOutputAdapter) *DeterminatorService {
 	return &DeterminatorService{
 		inputOutputAdapter: inputOutputAdapter,
 	}
 }
 
 type DeterminatorService struct {
-	inputOutputAdapter app.GrammarInputOutputAdapter
+	inputOutputAdapter app.FiniteInputOutputAdapter
 }
 
 func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) error {
-	automaton, err := s.inputOutputAdapter.GetFinite(inputFilename)
+	automaton, err := s.inputOutputAdapter.GetNonDeterministicFinite(inputFilename)
 	if err != nil {
 		return err
 	}
 
-	// TODO: implement determination with empty symbols
+	fmt.Println(automaton)
 
-	return s.inputOutputAdapter.WriteFinite(outputFilename, automaton)
-}
-
-func buildStateToClosureMap(automaton app.FiniteAutomaton) map[string][]string {
-	result := make(map[string][]string)
-	for _, state := range automaton.States {
-		key := app.InitialStateAndInputSymbol{
-			State:  state.State,
-			Symbol: app.EmptySymbol,
-		}
-
-		result[state.State] = append(result[state.State], automaton.Moves[key])
-	}
-
-	return result
+	return nil
 }
