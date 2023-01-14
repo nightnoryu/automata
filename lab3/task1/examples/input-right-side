@@ -1,3 +1,0 @@
-S -> aB
-B -> aC | a | dB
-C -> aB
