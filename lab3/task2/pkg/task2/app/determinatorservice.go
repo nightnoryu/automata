@@ -1,8 +1,9 @@
 package app
 
 import (
-	"automata/common/app"
 	"fmt"
+
+	"automata/common/app"
 )
 
 const emptyMoveIndicator = "e"
