@@ -117,7 +117,7 @@ func removeUnreachableMooreStates(mooreAutomaton app.MooreAutomaton) app.MooreAu
 	}
 
 	newStates := make([]string, 0, len(reachableStatesMap))
-	for _, state := range mooreAutomaton.States {
+	for _, state := range mooreAutomaton.States[1:] {
 		if reachableStatesMap[state] {
 			newStates = append(newStates, state)
 			continue
