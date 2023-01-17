@@ -79,6 +79,10 @@ func getMovesWithSignals(
 	result := make(map[app.InitialStateAndInputSymbol]app.DestinationStateAndSignal)
 	for i, stateAndMoves := range transposedRecords[1:] {
 		for j, move := range stateAndMoves {
+			if move == emptyMoveIndicator {
+				continue
+			}
+
 			stateAndInput := app.InitialStateAndInputSymbol{
 				State:  states[i],
 				Symbol: inputSymbols[j],
@@ -116,7 +120,11 @@ func serializeMealy(automaton app.MealyAutomaton) [][]string {
 				Symbol: inputSymbol,
 			}
 
-			result[i+1] = append(result[i+1], serializeMealyMove(automaton.Moves[key]))
+			if move, ok := automaton.Moves[key]; ok {
+				result[i+1] = append(result[i+1], serializeMealyMove(move))
+			} else {
+				result[i+1] = append(result[i+1], emptyMoveIndicator)
+			}
 		}
 	}
 
@@ -145,7 +153,11 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 				Symbol: inputSymbol,
 			}
 
-			result[i+2] = append(result[i+2], automaton.Moves[key])
+			if move, ok := automaton.Moves[key]; ok {
+				result[i+2] = append(result[i+2], move)
+			} else {
+				result[i+2] = append(result[i+2], emptyMoveIndicator)
+			}
 		}
 	}
 
