@@ -2,11 +2,15 @@ package app
 
 import (
 	"fmt"
+	"strconv"
 
 	"automata/common/app"
 )
 
-const emptyMoveIndicator = "e"
+const (
+	emptyMoveIndicator = "e"
+	newStatesName      = "S"
+)
 
 func NewDeterminatorService(inputOutputAdapter app.FiniteInputOutputAdapter) *DeterminatorService {
 	return &DeterminatorService{
@@ -27,7 +31,26 @@ func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) 
 	closures := buildClosures(automaton)
 	fmt.Println(closures)
 
-	return nil
+	newStates := make(map[string][]string)
+	newMoves := make(app.DeterministicMoves)
+
+	var stateQueue []string
+	stateQueue = append(stateQueue, automaton.States[0])
+	for len(stateQueue) > 0 {
+
+	}
+	// Go starting with q0 closure
+	// Combine moves from q0 closure states
+	// Save new states to a map
+
+	result := app.FiniteAutomaton{
+		States:       nil,
+		InputSymbols: automaton.InputSymbols,
+		FinalStates:  nil,
+		Moves:        nil,
+	}
+
+	return s.inputOutputAdapter.WriteFinite(outputFilename, result)
 }
 
 func buildClosures(automaton app.NonDeterministicFiniteAutomaton) map[string][]string {
@@ -65,6 +88,10 @@ func recurseClosures(result map[string][]string) bool {
 	}
 
 	return foundDeeper
+}
+
+func buildStateName(number int) string {
+	return newStatesName + strconv.Itoa(number)
 }
 
 func inSlice(haystack []string, needle string) bool {
