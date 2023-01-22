@@ -4,7 +4,6 @@ import (
 	"automata/common/app"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -78,19 +77,54 @@ func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) 
 			if len(destinationStates) != 0 {
 				stateQueue = append(stateQueue, destinationStates)
 				destinationState := getFullState(destinationStates, closures, automaton.FinalStates)
-				newMoves[newKey] = strings.Join(destinationState.States, ",")
+				newMoves[newKey] = getStatesHash(destinationState.States)
 			}
 		}
 	}
 
+	resultStates, resultFinalStates, resultMoves := generateStateNames(newStates, newFinalStates, newMoves)
+
 	result := app.FiniteAutomaton{
-		States:       newStates,
+		States:       resultStates,
 		InputSymbols: removeEmptyInputSymbol(automaton.InputSymbols),
-		FinalStates:  newFinalStates,
-		Moves:        newMoves,
+		FinalStates:  resultFinalStates,
+		Moves:        resultMoves,
 	}
 
 	return s.inputOutputAdapter.WriteFinite(outputFilename, result)
+}
+
+func generateStateNames(
+	states []string,
+	finalStates map[string]bool,
+	moves app.DeterministicMoves,
+) (newStates []string, newFinalStates map[string]bool, newMoves app.DeterministicMoves) {
+	newStateNamesMap := make(map[string]string)
+	stateNumber := 1
+	for _, state := range states {
+		newStateName := buildStateName(stateNumber)
+		stateNumber++
+
+		newStateNamesMap[state] = newStateName
+		newStates = append(newStates, newStateName)
+	}
+
+	newFinalStates = make(map[string]bool)
+	for state, isFinal := range finalStates {
+		newFinalStates[newStateNamesMap[state]] = isFinal
+	}
+
+	newMoves = make(app.DeterministicMoves)
+	for key, destinationState := range moves {
+		newKey := app.InitialStateAndInputSymbol{
+			State:  newStateNamesMap[key.State],
+			Symbol: key.Symbol,
+		}
+
+		newMoves[newKey] = newStateNamesMap[destinationState]
+	}
+
+	return
 }
 
 func removeEmptyInputSymbol(symbols []string) []string {
