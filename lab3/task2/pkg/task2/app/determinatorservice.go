@@ -2,6 +2,7 @@ package app
 
 import (
 	"automata/common/app"
+	"log"
 	"sort"
 	"strconv"
 )
@@ -107,6 +108,8 @@ func generateStateNames(
 
 		newStateNamesMap[state] = newStateName
 		newStates = append(newStates, newStateName)
+
+		log.Printf("%s = %s", newStateName, state)
 	}
 
 	newFinalStates = make(map[string]bool)

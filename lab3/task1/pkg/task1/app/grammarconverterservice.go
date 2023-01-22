@@ -20,7 +20,10 @@ type GrammarConverterService struct {
 	finiteInputOutputAdapter app.FiniteInputOutputAdapter
 }
 
-func (s *GrammarConverterService) ConvertToFinite(grammarSide app.GrammarSide, inputFilename, outputFilename string) error {
+func (s *GrammarConverterService) ConvertToFinite(
+	grammarSide app.GrammarSide,
+	inputFilename, outputFilename string,
+) error {
 	grammar, err := s.grammarInputAdapter.GetGrammar(inputFilename, grammarSide)
 	if err != nil {
 		return err
