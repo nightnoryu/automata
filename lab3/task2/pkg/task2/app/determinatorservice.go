@@ -1,10 +1,10 @@
 package app
 
 import (
-	"fmt"
-	"strconv"
-
 	"automata/common/app"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -29,32 +29,125 @@ func (s *DeterminatorService) Determinate(inputFilename, outputFilename string) 
 	}
 
 	closures := buildClosures(automaton)
-	fmt.Println(closures)
 
-	newStates := make(map[string][]string)
+	stateHashMap := make(map[string]stateCombination)
+
+	var newStates []string
+	newFinalStates := make(map[string]bool)
 	newMoves := make(app.DeterministicMoves)
 
-	var stateQueue []string
-	stateQueue = append(stateQueue, automaton.States[0])
-	for len(stateQueue) > 0 {
+	var stateQueue [][]string
+	stateQueue = append(stateQueue, []string{automaton.States[0]})
 
+	for len(stateQueue) > 0 {
+		states := stateQueue[len(stateQueue)-1]
+		stateQueue = stateQueue[1:]
+
+		currentState := getFullState(states, closures, automaton.FinalStates)
+
+		stateHash := getStatesHash(currentState.States)
+		if _, ok := stateHashMap[stateHash]; ok {
+			continue
+		}
+		stateHashMap[stateHash] = currentState
+		newStates = append(newStates, stateHash)
+		newFinalStates[stateHash] = currentState.IsFinal
+
+		for _, symbol := range automaton.InputSymbols {
+			if symbol == emptyMoveIndicator {
+				continue
+			}
+
+			newKey := app.InitialStateAndInputSymbol{
+				State:  stateHash,
+				Symbol: symbol,
+			}
+
+			var destinationStates []string
+			for _, state := range currentState.States {
+				key := app.InitialStateAndInputSymbol{
+					State:  state,
+					Symbol: symbol,
+				}
+
+				for _, initialDestinationState := range automaton.Moves[key] {
+					destinationStates = append(destinationStates, initialDestinationState)
+				}
+			}
+
+			if len(destinationStates) != 0 {
+				stateQueue = append(stateQueue, destinationStates)
+				destinationState := getFullState(destinationStates, closures, automaton.FinalStates)
+				newMoves[newKey] = strings.Join(destinationState.States, ",")
+			}
+		}
 	}
-	// Go starting with q0 closure
-	// Combine moves from q0 closure states
-	// Save new states to a map
 
 	result := app.FiniteAutomaton{
-		States:       nil,
-		InputSymbols: automaton.InputSymbols,
-		FinalStates:  nil,
-		Moves:        nil,
+		States:       newStates,
+		InputSymbols: removeEmptyInputSymbol(automaton.InputSymbols),
+		FinalStates:  newFinalStates,
+		Moves:        newMoves,
 	}
 
 	return s.inputOutputAdapter.WriteFinite(outputFilename, result)
 }
 
-func buildClosures(automaton app.NonDeterministicFiniteAutomaton) map[string][]string {
-	result := make(map[string][]string)
+func removeEmptyInputSymbol(symbols []string) []string {
+	result := make([]string, 0, len(symbols)-1)
+	for _, symbol := range symbols {
+		if symbol == emptyMoveIndicator {
+			continue
+		}
+		result = append(result, symbol)
+	}
+
+	return result
+}
+
+func getStatesHash(states []string) string {
+	result := ""
+	for _, state := range states {
+		result += state
+	}
+
+	return result
+}
+
+func getFullState(
+	states []string,
+	closures map[string]stateCombination,
+	finalStates map[string]bool,
+) stateCombination {
+	stateMap := make(map[string]bool)
+	for _, state := range states {
+		stateMap[state] = true
+		if closure, ok := closures[state]; ok {
+			for _, closureState := range closure.States {
+				stateMap[closureState] = true
+			}
+		}
+	}
+
+	resultStates := make([]string, 0, len(stateMap))
+	isFinal := false
+	for state := range stateMap {
+		resultStates = append(resultStates, state)
+		if finalStates[state] {
+			isFinal = true
+		}
+	}
+
+	sort.Strings(resultStates)
+
+	return stateCombination{
+		IsFinal: isFinal,
+		States:  resultStates,
+	}
+}
+
+func buildClosures(automaton app.NonDeterministicFiniteAutomaton) map[string]stateCombination {
+	flatClosures := make(map[string][]string)
 	for _, state := range automaton.States {
 		key := app.InitialStateAndInputSymbol{
 			State:  state,
@@ -62,11 +155,27 @@ func buildClosures(automaton app.NonDeterministicFiniteAutomaton) map[string][]s
 		}
 
 		for _, destinationState := range automaton.Moves[key] {
-			result[state] = append(result[state], destinationState)
+			flatClosures[state] = append(flatClosures[state], destinationState)
 		}
 	}
 
-	for recurseClosures(result) {
+	for recurseClosures(flatClosures) {
+	}
+
+	result := make(map[string]stateCombination)
+	for state, closureStates := range flatClosures {
+		isFinal := false
+		for _, closureState := range closureStates {
+			if automaton.FinalStates[closureState] {
+				isFinal = true
+				break
+			}
+		}
+
+		result[state] = stateCombination{
+			IsFinal: isFinal,
+			States:  closureStates,
+		}
 	}
 
 	return result
@@ -102,4 +211,9 @@ func inSlice(haystack []string, needle string) bool {
 	}
 
 	return false
+}
+
+type stateCombination struct {
+	IsFinal bool
+	States  []string
 }
