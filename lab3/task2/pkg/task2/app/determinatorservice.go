@@ -193,6 +193,10 @@ func buildClosures(automaton app.NonDeterministicFiniteAutomaton) map[string]sta
 		}
 	}
 
+	if len(flatClosures) == 0 {
+		return nil
+	}
+
 	for recurseClosures(flatClosures) {
 	}
 
