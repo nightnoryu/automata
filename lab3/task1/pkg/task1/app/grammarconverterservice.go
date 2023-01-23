@@ -1,10 +1,14 @@
 package app
 
 import (
+	"errors"
+	"fmt"
+
 	"automata/common/app"
 	task2app "automata/lab3/task2/pkg/task2/app"
-	"errors"
 )
+
+const finalState = "F"
 
 func NewGrammarConverterService(
 	grammarInputAdapter app.GrammarInputAdapter,
@@ -37,6 +41,7 @@ func (s *GrammarConverterService) ConvertToFinite(
 	if err != nil {
 		return err
 	}
+	fmt.Println(automaton)
 	result := s.determinator.Determinate(automaton)
 
 	return s.finiteInputOutputAdapter.WriteFinite(outputFilename, result)
@@ -54,7 +59,38 @@ func grammarToAutomaton(grammar app.Grammar) (app.NonDeterministicFiniteAutomato
 }
 
 func rightSideGrammarToAutomaton(grammar app.Grammar) app.NonDeterministicFiniteAutomaton {
-	return app.NonDeterministicFiniteAutomaton{}
+	states := make([]string, 0, len(grammar.NonTerminalSymbols)+1)
+	for _, symbol := range grammar.NonTerminalSymbols {
+		states = append(states, symbol)
+	}
+	states = append(states, finalState)
+
+	finalStates := make(map[string]bool)
+	finalStates[finalState] = true
+
+	moves := make(app.NonDeterministicMoves)
+	for nonTerminalWithTerminal, destinationNonTerminals := range grammar.Rules {
+		key := app.InitialStateAndInputSymbol{
+			State:  nonTerminalWithTerminal.NonTerminal,
+			Symbol: nonTerminalWithTerminal.Terminal,
+		}
+
+		for _, destinationNonTerminal := range destinationNonTerminals {
+			destination := destinationNonTerminal
+			if destination == "" {
+				destination = finalState
+			}
+
+			moves[key] = append(moves[key], destination)
+		}
+	}
+
+	return app.NonDeterministicFiniteAutomaton{
+		States:       states,
+		InputSymbols: grammar.TerminalSymbols,
+		FinalStates:  finalStates,
+		Moves:        moves,
+	}
 }
 
 func leftSideGrammarToAutomaton(grammar app.Grammar) app.NonDeterministicFiniteAutomaton {
