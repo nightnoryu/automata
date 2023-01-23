@@ -100,7 +100,12 @@ func serializeFinite(automaton app.FiniteAutomaton) [][]string {
 				Symbol: inputSymbol,
 			}
 
-			result[i+2] = append(result[i+2], automaton.Moves[key])
+			destination := automaton.Moves[key]
+			if destination == "" {
+				destination = emptyMoveIndicator
+			}
+
+			result[i+2] = append(result[i+2], destination)
 		}
 	}
 
