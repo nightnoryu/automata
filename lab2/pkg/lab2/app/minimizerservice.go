@@ -2,6 +2,7 @@ package app
 
 import (
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -271,6 +272,8 @@ func buildMinimizedMealy(mealyAutomaton app.MealyAutomaton, groupToStatesMap map
 		}
 	}
 
+	sort.Strings(newStates)
+
 	return app.MealyAutomaton{
 		States:       newStates,
 		InputSymbols: mealyAutomaton.InputSymbols,
@@ -322,6 +325,8 @@ func buildMinimizedMoore(mooreAutomaton app.MooreAutomaton, groupToStatesMap map
 			newMoves[newKey] = oldStateToNewStateMap[oldDestinationState]
 		}
 	}
+
+	sort.Strings(newStates)
 
 	return app.MooreAutomaton{
 		States:       newStates,
