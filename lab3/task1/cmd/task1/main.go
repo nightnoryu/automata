@@ -5,6 +5,7 @@ import (
 
 	"automata/common/infrastructure"
 	"automata/lab3/task1/pkg/task1/app"
+	task2app "automata/lab3/task2/pkg/task2/app"
 )
 
 func main() {
@@ -15,7 +16,8 @@ func main() {
 
 	grammarInputAdapter := infrastructure.NewGrammarInputAdapter()
 	finiteInputOutputAdapter := infrastructure.NewFiniteInputOutputAdapter()
-	service := app.NewGrammarConverterService(grammarInputAdapter, finiteInputOutputAdapter)
+	determinator := task2app.NewDeterminator()
+	service := app.NewGrammarConverterService(grammarInputAdapter, finiteInputOutputAdapter, determinator)
 
 	if err = service.ConvertToFinite(args.GrammarSide, args.InputFilename, args.OutputFilename); err != nil {
 		log.Fatal(err)
