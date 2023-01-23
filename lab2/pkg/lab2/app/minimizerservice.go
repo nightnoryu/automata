@@ -84,7 +84,7 @@ func removeUnreachableMealyStates(mealyAutomaton app.MealyAutomaton) app.MealyAu
 	}
 
 	newStates := make([]string, 0, len(reachableStatesMap))
-	for _, state := range mealyAutomaton.States {
+	for _, state := range mealyAutomaton.States[1:] {
 		if reachableStatesMap[state] {
 			newStates = append(newStates, state)
 			continue
