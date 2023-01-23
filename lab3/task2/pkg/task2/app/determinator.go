@@ -32,7 +32,7 @@ func (d *Determinator) Determinate(automaton app.NonDeterministicFiniteAutomaton
 	stateQueue = append(stateQueue, []string{automaton.States[0]})
 
 	for len(stateQueue) > 0 {
-		states := stateQueue[len(stateQueue)-1]
+		states := stateQueue[0]
 		stateQueue = stateQueue[1:]
 
 		currentState := getFullState(states, closures, automaton.FinalStates)
