@@ -91,7 +91,7 @@ func generateStateNames(
 	moves app.DeterministicMoves,
 ) (newStates []string, newFinalStates map[string]bool, newMoves app.DeterministicMoves) {
 	newStateNamesMap := make(map[string]string)
-	stateNumber := 1
+	stateNumber := 0
 	for _, state := range states {
 		newStateName := buildStateName(stateNumber)
 		stateNumber++
