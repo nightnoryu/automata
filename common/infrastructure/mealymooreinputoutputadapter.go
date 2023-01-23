@@ -153,11 +153,12 @@ func serializeMoore(automaton app.MooreAutomaton) [][]string {
 				Symbol: inputSymbol,
 			}
 
-			if move, ok := automaton.Moves[key]; ok {
-				result[i+2] = append(result[i+2], move)
-			} else {
-				result[i+2] = append(result[i+2], emptyMoveIndicator)
+			destination := automaton.Moves[key]
+			if destination == "" {
+				destination = emptyMoveIndicator
 			}
+
+			result[i+2] = append(result[i+2], destination)
 		}
 	}
 
